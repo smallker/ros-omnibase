@@ -15,8 +15,9 @@ class OdometryNode:
 
     def __init__(self):
         self.odometry = odometry.Odometry()
-    def printmotor(self, data):
-        rospy.loginfo(f'a : {data.a} b: {data.b} c: {data.c}')
+
+    def printmotor(self, msg):
+        rospy.loginfo(f'a : {msg.a} b: {msg.b} c: {msg.c}')
 
     def main(self):
         self.odomPub = rospy.Publisher('odom', Odometry, queue_size=10)
@@ -25,12 +26,11 @@ class OdometryNode:
         rospy.init_node('node_odometry')
         self.nodeName = rospy.get_name()
         rospy.loginfo("{0} started".format(self.nodeName))
-        # rospy.Subscriber('motor_speed', MotorSpeed, self.printmotor)
         rospy.Subscriber("lwheel_ticks", Int32, self.leftCallback)
         rospy.Subscriber("rwheel_ticks", Int32, self.rightCallback)
         rospy.Subscriber("initialpose", PoseWithCovarianceStamped,
                          self.on_initial_pose)
-
+        rospy.Subscriber('motor_speed', MotorSpeed, self.printmotor)
         self.ticksPerMeter = int(rospy.get_param('~ticks_per_meter'))
         self.wheelSeparation = float(rospy.get_param('~wheel_separation'))
         self.rate = float(rospy.get_param('~rate', 10.0))

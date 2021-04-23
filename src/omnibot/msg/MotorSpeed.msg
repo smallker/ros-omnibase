@@ -1,3 +1,3 @@
-int32 a
-int32 b
-int32 c
+float32 a
+float32 b
+float32 c

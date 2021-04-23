@@ -22,12 +22,12 @@ class RobotMockNode:
             rospy.sleep(0.1)
 
     def publish_encoder(self):
-        publisher = rospy.Publisher('motor_speed', MotorSpeed, queue_size=10)
+        publisher = rospy.Publisher('motor_speed', MotorSpeed, queue_size=1)
         while(True):
             try:
                 rospy.sleep(0.1)
                 publisher.publish(self.m_speed)
-                rospy.loginfo(self.m_speed)
+                # rospy.loginfo(self.m_speed)
             except:
                 pass
 
