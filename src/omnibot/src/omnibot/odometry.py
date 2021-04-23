@@ -66,13 +66,9 @@ class Odometry:
         self.pose.x += deltaX
         self.pose.y += deltaY
         self.pose.theta = (self.pose.theta + deltaTheta) % (2*pi)
-        # self.pose.x = -1
-        # self.pose.y = 1
-        # self.pose.theta = 0
         self.pose.xVel = deltaTravel / deltaTime if deltaTime > 0 else 0.
         self.pose.yVel = 0
         self.pose.thetaVel = deltaTheta / deltaTime if deltaTime > 0 else 0.
-
         self.lastTime = newTime
 
     def getPose(self):

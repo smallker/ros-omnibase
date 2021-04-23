@@ -7,13 +7,16 @@ from std_msgs.msg import Int32
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from tf.broadcaster import TransformBroadcaster
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
-from math import sin, cos
 
 from omnibot import pose, odometry
+from omnibot.msg import MotorSpeed
+
 class OdometryNode:
 
     def __init__(self):
         self.odometry = odometry.Odometry()
+    def printmotor(self, data):
+        rospy.loginfo(f'a : {data.a} b: {data.b} c: {data.c}')
 
     def main(self):
         self.odomPub = rospy.Publisher('odom', Odometry, queue_size=10)
@@ -22,7 +25,7 @@ class OdometryNode:
         rospy.init_node('node_odometry')
         self.nodeName = rospy.get_name()
         rospy.loginfo("{0} started".format(self.nodeName))
-
+        # rospy.Subscriber('motor_speed', MotorSpeed, self.printmotor)
         rospy.Subscriber("lwheel_ticks", Int32, self.leftCallback)
         rospy.Subscriber("rwheel_ticks", Int32, self.rightCallback)
         rospy.Subscriber("initialpose", PoseWithCovarianceStamped,

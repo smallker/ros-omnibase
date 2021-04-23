@@ -18,13 +18,15 @@
     <param name="rate" value="10.0"/>
   </node>
 
-  <node name="node_odometry" pkg="omnibot" type="node_odometry"
+  <node name="node_odometry" pkg="omnibot" type="node_odometry.py"
         output="screen">
     <rosparam subst_value="true">
       ticks_per_meter: $(arg ticks_per_meter)
       wheel_separation: $(arg wheel_separation)
     </rosparam>
   </node>
+
+  <node name="node_robot_mock" pkg="omnibot" type="node_robot_mock.py" output="screen"/>
 
   <!-- <node name="robot" pkg="diff_drive" type="diff_drive_mock_robot"
         output="screen">
