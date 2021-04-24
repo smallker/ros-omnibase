@@ -1,78 +1,45 @@
-from __future__ import division
-from math import pi, sin, cos
-from omnibot.encoder import Encoder
+from omnibot.msg import MotorEncoder
+import math
+
 from omnibot.pose import Pose
 
+sqrt3 = 1.732050807568877193176604123436845839023590087890625
+
 class Odometry:
-    """Keeps track of the current position and velocity of a
-    robot using differential drive.
-    """
-
-    def __init__(self):
-        self.leftEncoder = Encoder()
-        self.rightEncoder = Encoder()
+    def __init__(self, d_wheel, base_wheel, ppr) -> None:
         self.pose = Pose()
-        self.lastTime = 0
+        self.last_pose = Pose()
+        self.last_time = 0
+        self.d_wheel = d_wheel
+        self.base_wheel = base_wheel
+        self.ppr = ppr
+        self.m_a:float = 0.0
+        self.m_b:float = 0.0
+        self.m_c:float = 0.0
 
-    def setWheelSeparation(self, separation):
-        self.wheelSeparation = separation
+    def set_time(self, time):
+        self.last_time = time
 
-    def setTicksPerMeter(self, ticks):
-        self.ticksPerMeter = ticks
+    def update_encoder(self, en_msg:MotorEncoder):
+        self.m_a = (en_msg.en_a / self.ppr) * math.pi * self.d_wheel
+        self.m_b = (en_msg.en_b / self.ppr) * math.pi * self.d_wheel
+        self.m_c = (en_msg.en_c / self.ppr) * math.pi * self.d_wheel
+
+    def update_pose(self, new_time):
+        delta_time = new_time - self.last_time
+        self.pose.y = (sqrt3 * self.m_a) - (sqrt3 * self.m_b)
+        self.pose.x = (2 * self.m_c) - self.m_a - self.m_b
+        self.pose.theta = (self.m_a + self.m_c + self.m_b) / self.base_wheel
+        self.pose.xVel = abs((self.pose.x - self.last_pose.x) / delta_time)
+        self.pose.yVel = abs((self.pose.y - self.last_pose.y)/ delta_time)
+        self.pose.thetaVel = abs((self.pose.theta - self.last_pose.thetaVel)/delta_time)
+        self.last_pose.y = self.pose.y
+        self.last_pose.x = self.pose.x
+        self.last_pose.theta = self.pose.theta
+        self.last_time = new_time
         
-    def setEncoderRange(self, low, high):
-        self.leftEncoder.setRange(low, high)
-        self.rightEncoder.setRange(low, high)
-
-    def setTime(self, newTime):
-        self.lastTime = newTime
-        
-    def updateLeftWheel(self, newCount):
-        self.leftEncoder.update(newCount)
-
-    def updateRightWheel(self, newCount):
-        self.rightEncoder.update(newCount)
-
-    def updatePose(self, newTime):
-        """Updates the pose based on the accumulated encoder ticks
-        of the two wheels. See https://chess.eecs.berkeley.edu/eecs149/documentation/differentialDrive.pdf
-        for details.
-        """
-        leftTravel = self.leftEncoder.getDelta() / self.ticksPerMeter
-        rightTravel = self.rightEncoder.getDelta() / self.ticksPerMeter
-        deltaTime = newTime - self.lastTime
-
-        deltaTravel = (rightTravel + leftTravel) / 2
-        deltaTheta = (rightTravel - leftTravel) / self.wheelSeparation
-
-        if rightTravel == leftTravel:
-            deltaX = leftTravel*cos(self.pose.theta)
-            deltaY = leftTravel*sin(self.pose.theta)
-        else:
-            radius = deltaTravel / deltaTheta
-
-            # Find the instantaneous center of curvature (ICC).
-            iccX = self.pose.x - radius*sin(self.pose.theta)
-            iccY = self.pose.y + radius*cos(self.pose.theta)
-
-            deltaX = cos(deltaTheta)*(self.pose.x - iccX) \
-                - sin(deltaTheta)*(self.pose.y - iccY) \
-                + iccX - self.pose.x
-
-            deltaY = sin(deltaTheta)*(self.pose.x - iccX) \
-                + cos(deltaTheta)*(self.pose.y - iccY) \
-                + iccY - self.pose.y
-
-        self.pose.x += deltaX
-        self.pose.y += deltaY
-        self.pose.theta = (self.pose.theta + deltaTheta) % (2*pi)
-        self.pose.xVel = deltaTravel / deltaTime if deltaTime > 0 else 0.
-        self.pose.yVel = 0
-        self.pose.thetaVel = deltaTheta / deltaTime if deltaTime > 0 else 0.
-        self.lastTime = newTime
-
-    def getPose(self):
+    def get_pose(self) -> Pose:
         return self.pose
 
-    def setPose(self, newPose):
-        self.pose = newPose
+    def set_pose(self, pose):
+        self.pose = pose

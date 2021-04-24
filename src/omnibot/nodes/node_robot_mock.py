@@ -1,8 +1,6 @@
 #! /usr/bin/python3
-from codecs import encode
 import math
 import rospy
-from std_msgs import msg
 from geometry_msgs.msg import Twist
 from threading import Thread
 from omnibot.kinematics import Kinematics
