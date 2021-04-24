@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   MotorSpeed.msg
+  MotorEncoder.msg
 )
 
 

@@ -16,9 +16,6 @@ class OdometryNode:
     def __init__(self):
         self.odometry = odometry.Odometry()
 
-    def printmotor(self, msg):
-        rospy.loginfo(f'a : {msg.a} b: {msg.b} c: {msg.c}')
-
     def main(self):
         self.odomPub = rospy.Publisher('odom', Odometry, queue_size=10)
         self.tfPub = TransformBroadcaster()
@@ -26,24 +23,12 @@ class OdometryNode:
         rospy.init_node('node_odometry')
         self.nodeName = rospy.get_name()
         rospy.loginfo("{0} started".format(self.nodeName))
-        rospy.Subscriber("lwheel_ticks", Int32, self.leftCallback)
-        rospy.Subscriber("rwheel_ticks", Int32, self.rightCallback)
         rospy.Subscriber("initialpose", PoseWithCovarianceStamped,
                          self.on_initial_pose)
-        # rospy.Subscriber('motor_speed', MotorSpeed, self.printmotor)
-        self.ticksPerMeter = int(rospy.get_param('~ticks_per_meter'))
-        self.wheelSeparation = float(rospy.get_param('~wheel_separation'))
         self.rate = float(rospy.get_param('~rate', 10.0))
         self.baseFrameID = rospy.get_param('~base_frame_id', 'base_link')
         self.odomFrameID = rospy.get_param('~odom_frame_id', 'odom')
-        self.encoderMin = int(rospy.get_param('~encoder_min', -32768))
-        self.encoderMax = int(rospy.get_param('~encoder_max', 32767))
-
-        self.odometry.setWheelSeparation(self.wheelSeparation)
-        self.odometry.setTicksPerMeter(self.ticksPerMeter)
-        self.odometry.setEncoderRange(self.encoderMin, self.encoderMax)
         self.odometry.setTime(rospy.get_time())
-
         rate = rospy.Rate(self.rate)
         while not rospy.is_shutdown():
             self.publish()
@@ -91,13 +76,6 @@ class OdometryNode:
 
         rospy.loginfo('Setting initial pose to %s', pose)
         self.odometry.setPose(pose)
-
-    def leftCallback(self, msg):
-        self.odometry.updateLeftWheel(msg.data)
-
-    def rightCallback(self, msg):
-        self.odometry.updateRightWheel(msg.data)
-
 
 if __name__ == '__main__':
     try:

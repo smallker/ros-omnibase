@@ -1,7 +1,8 @@
 <launch>
   <arg name="ticks_per_meter" value="10000" />
   <arg name="wheel_separation" value="0.2" />
-
+  <arg name="ppr" value="100"/>
+  <arg name="d_wheel_mm" value="60"/>
   <arg name="urdf_file" default="$(find omnibot)/urdf/robot.xacro" />
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg urdf_file)" />
 
@@ -26,7 +27,12 @@
     </rosparam>
   </node>
 
-  <node name="node_robot_mock" pkg="omnibot" type="node_robot_mock.py" output="screen"/>
+  <node name="node_robot_mock" pkg="omnibot" type="node_robot_mock.py" output="screen">
+    <rosparam subst_value="true">
+      d_wheel_mm: $(arg d_wheel_mm)
+      ppr: $(arg ppr)
+    </rosparam>
+  </node>
 
   <!-- <node name="robot" pkg="diff_drive" type="diff_drive_mock_robot"
         output="screen">
