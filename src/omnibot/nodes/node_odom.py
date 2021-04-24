@@ -8,37 +8,44 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from tf.broadcaster import TransformBroadcaster
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
-from omnibot import pose, odometry
-from omnibot.msg import MotorSpeed
+from omnibot import pose, odometry, odom
+from omnibot.msg import MotorSpeed, MotorEncoder
 
 class OdometryNode:
 
     def __init__(self):
-        self.odometry = odometry.Odometry()
-
+        self.m_encoder = MotorEncoder()
     def main(self):
         self.odomPub = rospy.Publisher('odom', Odometry, queue_size=10)
         self.tfPub = TransformBroadcaster()
 
-        rospy.init_node('node_odometry')
+        rospy.init_node('node_odom')
         self.nodeName = rospy.get_name()
         rospy.loginfo("{0} started".format(self.nodeName))
         rospy.Subscriber("initialpose", PoseWithCovarianceStamped,
                          self.on_initial_pose)
+        rospy.Subscriber('motor_encoder', MotorEncoder, self.encoder_callback)
         self.rate = float(rospy.get_param('~rate', 10.0))
         self.baseFrameID = rospy.get_param('~base_frame_id', 'base_link')
         self.odomFrameID = rospy.get_param('~odom_frame_id', 'odom')
-        self.odometry.setTime(rospy.get_time())
+        self.d_wheel = rospy.get_param('~d_wheel', 0.06)
+        self.base_wheel = rospy.get_param('~wheel_base', 0.2)
+        self.ppr = rospy.get_param('~ppr', 100)
+        self.odometry = odom.Odometry(self.d_wheel, self.base_wheel, self.ppr)
+        # self.odometry.set_time(rospy.get_time())
         rate = rospy.Rate(self.rate)
         while not rospy.is_shutdown():
             self.publish()
             rate.sleep()
 
-    def publish(self):
-        self.odometry.updatePose(rospy.get_time())
-        now = rospy.get_rostime()
-        pose = self.odometry.getPose()
+    def encoder_callback(self, msg:MotorEncoder):
+        self.m_encoder = msg
 
+    def publish(self):
+        self.odometry.update_encoder(self.m_encoder)
+        self.odometry.update_pose(rospy.get_time())
+        now = rospy.get_rostime()
+        pose = self.odometry.get_pose()
         q = quaternion_from_euler(0, 0, pose.theta)
         self.tfPub.sendTransform(
             (pose.x, pose.y, 0),
@@ -47,7 +54,6 @@ class OdometryNode:
             self.baseFrameID,
             self.odomFrameID
         )
-
         odom = Odometry()
         odom.header.stamp = now
         odom.header.frame_id = self.odomFrameID
@@ -61,6 +67,7 @@ class OdometryNode:
         odom.twist.twist.linear.x = pose.xVel
         odom.twist.twist.angular.z = pose.thetaVel
         self.odomPub.publish(odom)
+        rospy.loginfo(f'y : {pose.y} x : {pose.x} w : {pose.theta}')
 
     def on_initial_pose(self, msg):
         q = [msg.pose.pose.orientation.x,
@@ -75,11 +82,10 @@ class OdometryNode:
         pose.theta = yaw
 
         rospy.loginfo('Setting initial pose to %s', pose)
-        self.odometry.setPose(pose)
-
+        self.odometry.set_pose(pose)
 if __name__ == '__main__':
     try:
-        rospy.loginfo('running node odometry')
+        rospy.loginfo('running node odom')
         node = OdometryNode()
         node.main()
     except rospy.ROSInterruptException:

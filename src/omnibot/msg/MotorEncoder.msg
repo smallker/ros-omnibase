@@ -1,3 +1,3 @@
-int32 en_a
-int32 en_b
-int32 en_c
+float32 en_a
+float32 en_b
+float32 en_c

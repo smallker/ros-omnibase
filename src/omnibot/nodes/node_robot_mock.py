@@ -33,7 +33,6 @@ class RobotMockNode:
         while(True):
             try:
                 rospy.sleep(0.1)
-                rospy.loginfo(self.m_enc)
                 speed.publish(self.m_speed)
                 encoder.publish(self.m_enc)
             except:
@@ -43,7 +42,7 @@ class RobotMockNode:
         self.twist_msg = msg
 
     def read_param(self):
-        self.d_wheel_mm = rospy.get_param('~d_wheel_mm')
+        self.d_wheel_mm = rospy.get_param('~d_wheel')
         self.ppr = rospy.get_param('~ppr')
 
     def listen(self):

@@ -34,7 +34,7 @@ include_directories(
 )
 
 catkin_install_python(PROGRAMS
-   nodes/node_odometry.py
+   nodes/node_odom.py
    nodes/node_robot_mock.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )

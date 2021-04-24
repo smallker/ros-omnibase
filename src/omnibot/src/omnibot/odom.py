@@ -3,6 +3,8 @@ import math
 
 from omnibot.pose import Pose
 
+sqrt3 = 1.732050807568877193176604123436845839023590087890625
+
 class Odometry:
     def __init__(self, d_wheel, base_wheel, ppr) -> None:
         self.pose = Pose()
@@ -11,17 +13,23 @@ class Odometry:
         self.d_wheel = d_wheel
         self.base_wheel = base_wheel
         self.ppr = ppr
+        self.m_a:float = 0.0
+        self.m_b:float = 0.0
+        self.m_c:float = 0.0
+
+    def set_time(self, time):
+        self.last_time = time
 
     def update_encoder(self, en_msg:MotorEncoder):
-        self.en_a = en_msg.en_a
-        self.en_b = en_msg.en_b
-        self.en_c = en_msg.en_c
+        self.m_a = (en_msg.en_a / self.ppr) * math.pi * self.d_wheel
+        self.m_b = (en_msg.en_b / self.ppr) * math.pi * self.d_wheel
+        self.m_c = (en_msg.en_c / self.ppr) * math.pi * self.d_wheel
 
     def update_pose(self, new_time):
         delta_time = new_time - self.last_time
-        self.pose.y = 3 * math.pi ((0.33 * self.en_a) - (0.33 * self.en_b) - (0.66 * self.en_c))
-        self.pose.x = 1.7 * math.pi ((0.33 * self.en_c) + (0.58 * self.en_b))
-        self.pose.theta = (self.d_wheel/(6 * self.base_wheel)) * 2 * math.pi * (self.en_a + self.en_b + self.en_c)
+        self.pose.y = (sqrt3 * self.m_a) - (sqrt3 * self.m_b)
+        self.pose.x = (2 * self.m_c) - self.m_a - self.m_b
+        self.pose.theta = (self.m_a + self.m_c + self.m_b) / self.base_wheel
         self.pose.xVel = abs((self.pose.x - self.last_pose.x) / delta_time)
         self.pose.yVel = abs((self.pose.y - self.last_pose.y)/ delta_time)
         self.pose.thetaVel = abs((self.pose.theta - self.last_pose.thetaVel)/delta_time)
@@ -29,6 +37,9 @@ class Odometry:
         self.last_pose.x = self.pose.x
         self.last_pose.theta = self.pose.theta
         self.last_time = new_time
-    
+        
     def get_pose(self) -> Pose:
         return self.pose
+
+    def set_pose(self, pose):
+        self.pose = pose

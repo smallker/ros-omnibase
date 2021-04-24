@@ -2,7 +2,8 @@
   <arg name="ticks_per_meter" value="10000" />
   <arg name="wheel_separation" value="0.2" />
   <arg name="ppr" value="100"/>
-  <arg name="d_wheel_mm" value="60"/>
+  <arg name="d_wheel" value="0.06"/>
+  <arg name="wheel_base" value="0.1"/>
   <arg name="urdf_file" default="$(find omnibot)/urdf/robot.xacro" />
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg urdf_file)" />
 
@@ -19,17 +20,20 @@
     <param name="rate" value="10.0"/>
   </node>
 
-  <node name="node_odometry" pkg="omnibot" type="node_odometry.py"
+  <node name="node_odom" pkg="omnibot" type="node_odom.py"
         output="screen">
     <rosparam subst_value="true">
       ticks_per_meter: $(arg ticks_per_meter)
       wheel_separation: $(arg wheel_separation)
+      d_wheel: $(arg d_wheel)
+      ppr: $(arg ppr)
+      wheel_base: $(arg wheel_base)
     </rosparam>
   </node>
 
   <node name="node_robot_mock" pkg="omnibot" type="node_robot_mock.py" output="screen">
     <rosparam subst_value="true">
-      d_wheel_mm: $(arg d_wheel_mm)
+      d_wheel: $(arg d_wheel)
       ppr: $(arg ppr)
     </rosparam>
   </node>
