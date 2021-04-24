@@ -15,8 +15,8 @@ class OdometryNode:
     def __init__(self):
         self.m_encoder = MotorEncoder()
     def main(self):
-        self.odomPub = rospy.Publisher('odom', Odometry, queue_size=10)
-        self.tfPub = TransformBroadcaster()
+        self.odom_pub = rospy.Publisher('odom', Odometry, queue_size=10)
+        self.tf_pub = TransformBroadcaster()
 
         rospy.init_node('node_odometry')
         self.nodeName = rospy.get_name()
@@ -46,7 +46,7 @@ class OdometryNode:
         now = rospy.get_rostime()
         pose = self.odometry.get_pose()
         q = quaternion_from_euler(0, 0, pose.theta)
-        self.tfPub.sendTransform(
+        self.tf_pub.sendTransform(
             (pose.x, pose.y, 0),
             (q[0], q[1], q[2], q[3]),
             now,
@@ -65,7 +65,7 @@ class OdometryNode:
         odom.pose.pose.orientation.w = q[3]
         odom.twist.twist.linear.x = pose.xVel
         odom.twist.twist.angular.z = pose.thetaVel
-        self.odomPub.publish(odom)
+        self.odom_pub.publish(odom)
         rospy.loginfo(f'y : {pose.y} x : {pose.x} w : {pose.theta}')
 
     def on_initial_pose(self, msg):
