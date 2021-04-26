@@ -4,6 +4,7 @@
 #include "ota.h"
 #include "ros_setup.h"
 #include <Wire.h>
+#include <QMC5883LCompass.h>
 #define M1_A    4
 #define M1_B    16
 #define M1_PWM  17
@@ -17,5 +18,9 @@
 TaskHandle_t blink;
 TaskHandle_t ros_task;
 TaskHandle_t ros_pub;
+TaskHandle_t cmp_task;
+
 void blinker(void *parameters);
 void initNode(void *parameters);
+
+volatile int heading;

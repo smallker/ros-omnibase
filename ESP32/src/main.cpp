@@ -14,8 +14,10 @@ void initNode(void *parameters)
 {
   nh.initNode();
   nh.advertise(publisher);
+  nh.advertise(heading_pub);
   for (;;)
   {
+    if(client.connected() != 1) ESP.restart();
     nh.spinOnce();
     vTaskDelay(100);
   }
@@ -28,9 +30,23 @@ void publishMessage(void *parameter)
     if (client.connected() == 1)
     {
       message.data = "Hore";
+      heading_data.data = heading;
       publisher.publish(&message);
+      heading_pub.publish(&heading_data);
     }
-    vTaskDelay(1000);
+    vTaskDelay(100);
+  }
+}
+
+void readCompass(void *parameters)
+{
+  QMC5883LCompass compass;
+  compass.init();
+  for (;;)
+  {
+    compass.read();
+    heading = compass.getAzimuth();
+    vTaskDelay(100);
   }
 }
 
@@ -51,9 +67,10 @@ void setup()
   xTaskCreatePinnedToCore(blinker, "blink", 1000, NULL, 1, &blink, 0);
   xTaskCreatePinnedToCore(initNode, "ros init node", 5000, NULL, 5, &ros_task, 0);
   xTaskCreatePinnedToCore(publishMessage, "ros publisher", 10000, NULL, 2, &ros_pub, 1);
+  xTaskCreatePinnedToCore(readCompass, "read compass", 10000, NULL, 2, &cmp_task, 1);
 }
 
 void loop()
 {
-  // ArduinoOTA.handle();
+  ArduinoOTA.handle();
 }
