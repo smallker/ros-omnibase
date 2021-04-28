@@ -20,8 +20,7 @@
     <param name="rate" value="10.0"/>
   </node>
 
-  <node name="node_odometry" pkg="omnibot" type="node_odometry.py"
-        output="screen">
+  <node name="node_odometry" pkg="omnibot" type="node_odometry.py">
     <rosparam subst_value="true">
       ticks_per_meter: $(arg ticks_per_meter)
       wheel_separation: $(arg wheel_separation)
@@ -31,7 +30,7 @@
     </rosparam>
   </node>
 
-  <node name="node_robot_mock" pkg="omnibot" type="node_robot_mock.py" output="screen">
+  <node name="node_robot_mock" pkg="omnibot" type="node_robot_mock.py">
     <rosparam subst_value="true">
       d_wheel: $(arg d_wheel)
       ppr: $(arg ppr)
@@ -61,6 +60,8 @@
     <param name="~forwardMovementOnly" value="false" />
     <remap from="cmd_vel" to="/robot/cmd_vel" />
   </node> -->
+  
+  <node name="teleop" pkg="omnibot" type="teleop.py" output="screen"/>
 
   <node name="rviz" pkg="rviz" type="rviz"
         args="-d $(find omnibot)/config/view.rviz" />
