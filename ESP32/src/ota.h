@@ -2,7 +2,6 @@
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-
 #define SSID "bolt"
 #define PASS "11111111"
 

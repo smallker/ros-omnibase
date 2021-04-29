@@ -2,6 +2,7 @@
 #include <ros.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Int32.h>
+#include <geometry_msgs/Twist.h>
 
 IPAddress server(192, 168, 43, 44); // ip of your ROS server
 IPAddress ip_address;
@@ -34,8 +35,10 @@ public:
     }
 };
 
-std_msgs::String message;
 std_msgs::Int32 heading_data;
+geometry_msgs::Twist vel_data;
 ros::NodeHandle_<WiFiHardware> nh;
-ros::Publisher publisher("arduino", &message);
 ros::Publisher heading_pub("heading", &heading_data);
+
+void velCallback(const geometry_msgs::Twist &msg_data);
+ros::Subscriber<geometry_msgs::Twist> vel_sub("cmd_vel", velCallback);
