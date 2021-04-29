@@ -35,10 +35,19 @@ public:
     }
 };
 
+// Inisialisasi variable ros message
 std_msgs::Int32 heading_data;
 geometry_msgs::Twist vel_data;
+
+// Inisialisasi ros node
 ros::NodeHandle_<WiFiHardware> nh;
+
+// Inisialisasi ros publisher
 ros::Publisher heading_pub("heading", &heading_data);
 
+
+// Inisialisasi fungsi callback subscriber
 void velCallback(const geometry_msgs::Twist &msg_data);
+
+// Inisialisasi ros subscriber
 ros::Subscriber<geometry_msgs::Twist> vel_sub("cmd_vel", velCallback);
