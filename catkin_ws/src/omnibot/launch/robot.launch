@@ -8,17 +8,17 @@
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg urdf_file)" />
 
   <!-- Publish the robot state -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher"
+  <!-- <node name="robot_state_publisher" pkg="robot_state_publisher"
         type="robot_state_publisher">
     <param name="publish_frequency" value="10.0"/>
-  </node>
+  </node> -->
 
   <!-- Provide simulated control of the robot joint angles -->
-  <node name="joint_state_publisher" pkg="joint_state_publisher"
+  <!-- <node name="joint_state_publisher" pkg="joint_state_publisher"
         type="joint_state_publisher">
     <param name="use_gui" value="False" />
     <param name="rate" value="10.0"/>
-  </node>
+  </node> -->
 
   <node name="node_odometry" pkg="omnibot" type="node_odometry.py">
     <rosparam subst_value="true">
@@ -37,33 +37,12 @@
     </rosparam>
   </node>
 
-  <!-- <node name="robot" pkg="diff_drive" type="diff_drive_mock_robot"
-        output="screen">
-    <remap from="~lwheel_desired_rate" to="lwheel_desired_rate" />
-    <remap from="~rwheel_desired_rate" to="rwheel_desired_rate" />
-    <remap from="~lwheel_ticks" to="lwheel_ticks" />
-    <remap from="~rwheel_ticks" to="rwheel_ticks" />
+  <node pkg="rosserial_python" type="serial_node.py" name="serial_node">
+    <param name="port" value="tcp"/>
   </node>
-
-  <node name="diff_drive_go_to_goal" pkg="diff_drive"
-        type="diff_drive_go_to_goal" output="screen">
-    <param name="~rate" value="20" />
-    <param name="~kP" value="0.5" />
-    <param name="~kA" value="1.0" />
-    <param name="~kB" value="-0.8" />
-    <param name="~max_linear_speed" value="0.2" />
-    <param name="~min_linear_speed" value="0.05" />
-    <param name="~max_angular_speed" value="0.7" />
-    <param name="~min_angular_speed" value="0.1" />
-    <param name="~linear_tolerance" value="0.01" />
-    <param name="~angular_tolerance" value="0.04" />
-    <param name="~forwardMovementOnly" value="false" />
-    <remap from="cmd_vel" to="/robot/cmd_vel" />
-  </node> -->
-  
   <node name="teleop" pkg="omnibot" type="teleop.py" output="screen"/>
 
-  <node name="rviz" pkg="rviz" type="rviz"
-        args="-d $(find omnibot)/config/view.rviz" />
+  <!-- <node name="rviz" pkg="rviz" type="rviz"
+        args="-d $(find omnibot)/config/view.rviz" /> -->
 
 </launch>
