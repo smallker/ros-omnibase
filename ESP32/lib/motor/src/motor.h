@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #define PWM62K    1
 #define PWM8K     2
-
+#define L298
 #include <analogWrite.h>
 class Motor
 {
@@ -15,7 +15,7 @@ class Motor
 private:
     byte a_pin, b_pin, pwm_pin;
     float ppr = 135;
-    float kp, ki, kd, windup, pwmPid, err, lastErr, mIntegral;
+    float kp, ki, kd, windup, pwm_pid, err, last_err, d_err, i_err;
     void forward(int pwm);
     void reverse(int pwm);
     bool pidEnable;

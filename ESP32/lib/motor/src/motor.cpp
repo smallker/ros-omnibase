@@ -38,8 +38,6 @@ Motor::Motor(byte a_pin, byte b_pin, byte pwm_pin, byte en_a, byte en_b)
     pinMode(this->pwm_pin, OUTPUT);
     pinMode(this->en_a, INPUT);
     pinMode(this->en_b, INPUT);
-    digitalWrite(this->a_pin, LOW);
-    digitalWrite(this->b_pin, LOW);
     digitalWrite(this->pwm_pin, LOW);
     // setPwmFrequency();
 }
@@ -66,10 +64,7 @@ Motor::Motor(byte a_pin, byte b_pin, byte pwm_pin, byte en_a, byte en_b, int ppr
     pinMode(this->pwm_pin, OUTPUT);
     pinMode(this->en_a, INPUT);
     pinMode(this->en_b, INPUT);
-    digitalWrite(this->a_pin, LOW);
-    digitalWrite(this->b_pin, LOW);
     digitalWrite(this->pwm_pin, LOW);
-    // setPwmFrequency();
 }
 /*
     Kp, Ki, Kd, Windup
@@ -118,19 +113,13 @@ void Motor::speed(int target)
     if (pidEnable == true)
     {
         err = abs(target) - rpm;
-        abs(mIntegral < windup) ? mIntegral += err : mIntegral = 0;
-        pwmPid = (kp * err * 0.1) + (ki * mIntegral * 0.01) + (kd * (err - lastErr) * 0.1);
-        lastErr = err;
-        pwmPid = abs(target) + pwmPid;
-        if (pwmPid < min_pwm)
-        {
-            pwmPid = min_pwm;
-        }
-        else if (pwmPid > max_pwm)
-        {
-            pwmPid = max_pwm;
-        }
-        target > 0 ? forward(pwmPid) : reverse(pwmPid);
+        d_err = err - last_err;
+        last_err = err;
+        i_err = i_err + err;
+        pwm_pid = (kp * err) + (kd * d_err) + (ki * i_err);
+        if(pwm_pid < min_pwm) pwm_pid = min_pwm;
+        else if(pwm_pid > max_pwm) pwm_pid = max_pwm;
+        target > 0 ? forward(pwm_pid) : reverse(pwm_pid);
     }
     else
     {
@@ -151,7 +140,6 @@ void Motor::forward(int pwm)
         pwm = 0;
     digitalWrite(this->a_pin, HIGH);
     digitalWrite(this->b_pin, LOW);
-    // analogWrite(this->pwm_pin, pwm);
     analogWrite(this->pwm_pin, pwm);
 }
 
@@ -164,11 +152,10 @@ void Motor::reverse(int pwm)
         pwm = 0;
     digitalWrite(this->a_pin, LOW);
     digitalWrite(this->b_pin, HIGH);
-    // analogWrite(this->pwm_pin, abs(pwm));
     analogWrite(this->pwm_pin, abs(pwm));
 }
 
-#if defined(EMS)
+#if defined(EMS) || defined(L298)
 /*
     Khusus driver EMS terdapat fungsi untuk mengerem
     motor dengan membuat pin A dan pin B menjadi HIGH

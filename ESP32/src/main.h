@@ -49,9 +49,9 @@ void moveBase(void *parameters);
 volatile int heading;
 
 // inisialisasi objek motor
-Motor m1(M1_A, M1_B, M1_PWM);
-Motor m2(M2_A, M2_B, M2_PWM);
-Motor m3(M3_A, M3_B, M3_PWM);
+Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B);
+Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B);
+Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
 
 // inisialisasi objek kinematik
 Kinematic base(OMNIBASE_Y);
