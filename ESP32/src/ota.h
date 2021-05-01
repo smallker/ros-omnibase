@@ -5,13 +5,19 @@
 #define SSID "bolt"
 #define PASS "11111111"
 
+#define AP
+
 void setupOta()
 {
     Serial.println("Booting");
-    IPAddress local_IP(192, 168, 43, 100);
-    IPAddress gateway(192, 168, 43, 1);
+    IPAddress local_ip(192, 168, 43, 100);
+    IPAddress gateway(192, 168, 43, 100);
     IPAddress subnet(255, 255, 255, 0);
-    WiFi.config(local_IP, gateway, subnet);
+    #ifdef AP
+    WiFi.softAP(SSID, PASS);
+    WiFi.softAPConfig(local_ip, gateway, subnet);
+    #else
+    WiFi.config(local_ip, gateway, subnet);
     WiFi.mode(WIFI_STA);
     WiFi.begin(SSID, PASS);
     while (WiFi.status() != WL_CONNECTED)
@@ -19,6 +25,6 @@ void setupOta()
         Serial.print(".");
         delay(1000);
     }
-    
-    ArduinoOTA.begin();
+    #endif
+    // ArduinoOTA.begin();
 }

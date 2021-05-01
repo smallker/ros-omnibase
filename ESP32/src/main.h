@@ -37,6 +37,7 @@ TaskHandle_t ros_task;
 TaskHandle_t ros_pub;
 TaskHandle_t cmp_task;
 TaskHandle_t motor_task;
+TaskHandle_t rpm_task;
 
 // Task RTOS
 void blinker(void *parameters);
@@ -44,14 +45,14 @@ void initNode(void *parameters);
 void publishMessage(void *parameter);
 void readCompass(void *parameters);
 void moveBase(void *parameters);
-
+void countRpm(void *parameters);
 // primitive global variable
 volatile int heading;
 
 // inisialisasi objek motor
-Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B);
-Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B);
-Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
+Motor m3(M1_A, M1_B, M1_PWM, EN1_A, EN1_B);
+Motor m1(M2_A, M2_B, M2_PWM, EN2_A, EN2_B);
+Motor m2(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
 
 // inisialisasi objek kinematik
 Kinematic base(OMNIBASE_Y);

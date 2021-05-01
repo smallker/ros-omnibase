@@ -22,7 +22,7 @@ private:
     int min_pwm = 0;
     int max_pwm = 150;
     byte divisor = 3;
-    int threshold = 50;
+    int threshold = 20;
     void setPwmFrequency();
 public:
     byte en_a, en_b;
@@ -33,7 +33,7 @@ public:
     Motor(byte a_pin, byte b_pin, byte pwm_pin, byte en_a, byte en_b);
     Motor(byte a_pin, byte b_pin, byte pwm_pin, byte en_a, byte en_b, int ppr);
     void pid(float kp, float ki, float kd , float windup);
-    void speed(int target);
+    void speed(float target);
     void brake();
     void isrHandler();
     void calculateRpm(int sampling_time_ms);

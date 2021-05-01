@@ -108,18 +108,23 @@ void Motor::setPidThreshold(int min_pwm, int max_pwm)
     dimasukkan adalah nilai setpoint RPM. Nilai minus untuk CCW
     dan nilai plus untuk CW
 */
-void Motor::speed(int target)
+void Motor::speed(float target)
 {
     if (pidEnable == true)
     {
+        if(i_err > windup) i_err = 0;
         err = abs(target) - rpm;
         d_err = err - last_err;
         last_err = err;
         i_err = i_err + err;
         pwm_pid = (kp * err) + (kd * d_err) + (ki * i_err);
-        if(pwm_pid < min_pwm) pwm_pid = min_pwm;
-        else if(pwm_pid > max_pwm) pwm_pid = max_pwm;
+        if(pwm_pid <= min_pwm) pwm_pid = min_pwm;
+        if(pwm_pid >= max_pwm) pwm_pid = max_pwm;
         target > 0 ? forward(pwm_pid) : reverse(pwm_pid);
+        Serial.print("sp : ");
+        Serial.print(target);
+        Serial.print(" rpm : ");
+        Serial.println(rpm);
     }
     else
     {
@@ -186,8 +191,8 @@ void Motor::brake()
 */
 void Motor::isrHandler()
 {
-    digitalRead(b_pin) == HIGH ? encoder_tick++ : encoder_tick--;
-    digitalRead(b_pin) == HIGH ? encoder_tick_acc++ : encoder_tick_acc--;
+    digitalRead(b_pin) == LOW ? encoder_tick++ : encoder_tick--;
+    digitalRead(b_pin) == LOW ? encoder_tick_acc++ : encoder_tick_acc--;
 }
 
 /*
