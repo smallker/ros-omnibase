@@ -7,7 +7,7 @@
 
 #define AP
 
-void setupOta()
+void setupOta(void *parameters)
 {
     Serial.println("Booting");
     IPAddress local_ip(192, 168, 43, 100);
@@ -27,4 +27,7 @@ void setupOta()
     }
     #endif
     // ArduinoOTA.begin();
+    for(;;){
+        vTaskDelay(100/portTICK_PERIOD_MS);
+    }
 }

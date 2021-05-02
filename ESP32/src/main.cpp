@@ -51,10 +51,27 @@ void readCompass(void *parameters)
 {
   QMC5883LCompass compass;
   compass.init();
+  compass.read();
+  long last_reading = compass.getAzimuth();
+  long continuous = last_reading;
   for (;;)
   {
     compass.read();
-    heading = compass.getAzimuth();
+    long now = compass.getAzimuth();
+    if(abs(now - last_reading)>300){
+      long offset;
+      if(now - last_reading < 0){
+        offset = (360 - last_reading) + now;
+        continuous = continuous + offset;
+      }
+      else{
+        offset = (360 - now) + last_reading;
+        continuous = continuous - (last_reading + offset);
+      }
+    }
+    else continuous = continuous + (now - last_reading);
+    heading = continuous;
+    last_reading = now;
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
 }
@@ -76,7 +93,7 @@ void moveBase(void *parameters)
     vTaskDelay(10);
   }
 }
-void velCallback(const geometry_msgs::Twist &msg_data)
+void velCb(const geometry_msgs::Twist &msg_data)
 {
   vel_data = msg_data;
 }
@@ -122,9 +139,13 @@ void readRpm(void *parameters){
   }
 }
 
-void setPidCallback(const geometry_msgs::Point &msg_data){
+void setPidCb(const geometry_msgs::Point &msg_data){
   m2.pid(msg_data.x, msg_data.y, msg_data.z, 1000);
   Serial.println(msg_data.x);
+}
+
+void zeroHeadingCb(const std_msgs::Empty &msg_data){
+  
 }
 
 void setup()
@@ -132,10 +153,10 @@ void setup()
   Serial.begin(115200);
   analogWriteFrequency(10000);
   m1.pid(0.4, 0.001, 0, 1000);
-  m2.pid(1, 0.001, 0, 1000);
+  m2.pid(0.5, 0, 0.001, 1000);
   m3.pid(0.4, 0.001, 0, 1000);
   base.setMotor(m1, m2, m3);
-  setupOta();
+  // setupOta();
   attachInterrupt(digitalPinToInterrupt(m1.en_a), EN1_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m2.en_a), EN2_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
@@ -144,10 +165,11 @@ void setup()
   // ESP32 memiliki 3 core, yaitu core 0, core 1, dan ULP
   // Sebisa mungkin prioritas task disamakan untuk menghindari crash
   // Task yang paling sering dijalankan diberikan prioritas paling tinggi
+  xTaskCreatePinnedToCore(setupOta, "setup ota", 10000, NULL, 5, &wifi_task, 0);
   xTaskCreatePinnedToCore(blinker, "blink", 1000, NULL, 1, &blink, 1);
-  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 1);
-  // xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);
-  // xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);
+  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);
+  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);
+  xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);
 }

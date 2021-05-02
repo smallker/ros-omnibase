@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include <ros.h>
+#include <std_msgs/Empty.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Int32.h>
 #include <geometry_msgs/Twist.h>
@@ -49,9 +50,11 @@ ros::Publisher heading_pub("heading", &heading_data);
 
 
 // Inisialisasi fungsi callback subscriber
-void velCallback(const geometry_msgs::Twist &msg_data);
-void setPidCallback(const geometry_msgs::Point &msg_data);
+void velCb(const geometry_msgs::Twist &msg_data);
+void setPidCb(const geometry_msgs::Point &msg_data);
+void zeroHeadingCb(const std_msgs::Empty &msg_data);
 
 // Inisialisasi ros subscriber
-ros::Subscriber<geometry_msgs::Twist> vel_sub("cmd_vel", velCallback);
-ros::Subscriber<geometry_msgs::Point> pid_sub("pid", setPidCallback);
+ros::Subscriber<geometry_msgs::Twist> vel_sub("cmd_vel", velCb);
+ros::Subscriber<geometry_msgs::Point> pid_sub("pid", setPidCb);
+ros::Subscriber<std_msgs::Empty> zero_sub("zero_heading", zeroHeadingCb);

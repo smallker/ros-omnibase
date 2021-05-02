@@ -121,10 +121,10 @@ void Motor::speed(float target)
         if(pwm_pid <= min_pwm) pwm_pid = min_pwm;
         if(pwm_pid >= max_pwm) pwm_pid = max_pwm;
         target > 0 ? forward(pwm_pid) : reverse(pwm_pid);
-        Serial.print("sp : ");
-        Serial.print(target);
-        Serial.print(" rpm : ");
-        Serial.println(rpm);
+        // Serial.print("sp : ");
+        // Serial.print(target);
+        // Serial.print(" rpm : ");
+        // Serial.println(rpm);
     }
     else
     {

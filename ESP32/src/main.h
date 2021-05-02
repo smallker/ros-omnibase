@@ -32,6 +32,7 @@
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 // Task handle untuk RTOS
+TaskHandle_t wifi_task;
 TaskHandle_t blink;
 TaskHandle_t ros_task;
 TaskHandle_t ros_pub;
