@@ -57,4 +57,4 @@ void zeroHeadingCb(const std_msgs::Empty &msg_data);
 // Inisialisasi ros subscriber
 ros::Subscriber<geometry_msgs::Twist> vel_sub("cmd_vel", velCb);
 ros::Subscriber<geometry_msgs::Point> pid_sub("pid", setPidCb);
-ros::Subscriber<std_msgs::Empty> zero_sub("zero_heading", zeroHeadingCb);
+// ros::Subscriber<std_msgs::Empty> zero_sub("zero_heading", zeroHeadingCb);

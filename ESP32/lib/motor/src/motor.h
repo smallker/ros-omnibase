@@ -15,7 +15,7 @@ class Motor
 private:
     byte a_pin, b_pin, pwm_pin;
     float ppr = 135;
-    float kp, ki, kd, windup, pwm_pid, err, last_err, d_err, i_err;
+    float windup, pwm_pid, err, last_err, d_err, i_err;
     void forward(int pwm);
     void reverse(int pwm);
     bool pidEnable;
@@ -25,6 +25,8 @@ private:
     int threshold = 20;
     void setPwmFrequency();
 public:
+    volatile float kp, ki, kd;
+    volatile float correction;
     byte en_a, en_b;
     volatile int rpm;
     volatile int encoder_tick;

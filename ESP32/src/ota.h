@@ -2,8 +2,8 @@
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#define SSID "bolt"
-#define PASS "11111111"
+#define SSID "OpenBase"
+#define PASS "openbase"
 
 #define AP
 
@@ -25,6 +25,7 @@ void setupOta(void *parameters)
         Serial.print(".");
         delay(1000);
     }
+    Serial.println("IP : "+(String)WiFi.localIP().toString());
     #endif
     // ArduinoOTA.begin();
     for(;;){

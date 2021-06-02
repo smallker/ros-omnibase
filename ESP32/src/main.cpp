@@ -18,8 +18,9 @@ void initNode(void *parameters)
   {
     while (true)
     {
-      vTaskDelay(10/portTICK_PERIOD_MS);
-      if(WiFi.softAPgetStationNum() > 0) break;
+      vTaskDelay(10 / portTICK_PERIOD_MS);
+      if (WiFi.softAPgetStationNum() > 0)
+        break;
     }
     if (client.connected() != 1)
     {
@@ -28,8 +29,8 @@ void initNode(void *parameters)
       nh.subscribe(vel_sub);
       nh.subscribe(pid_sub);
     }
-    if(client.connected()==1) nh.spinOnce();
-    Serial.println(WiFi.softAPgetStationNum());
+    if (client.connected() == 1)
+      nh.spinOnce();
     vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
@@ -58,20 +59,26 @@ void readCompass(void *parameters)
   {
     compass.read();
     long now = compass.getAzimuth();
-    if(abs(now - last_reading)>300){
+    if (abs(now - last_reading) > 300)
+    {
       long offset;
-      if(now - last_reading < 0){
+      if (now - last_reading < 0)
+      {
         offset = (360 - last_reading) + now;
         continuous = continuous + offset;
       }
-      else{
+      else
+      {
         offset = (360 - now) + last_reading;
         continuous = continuous - (last_reading + offset);
       }
     }
-    else continuous = continuous + (now - last_reading);
+    else
+      continuous = continuous + (now - last_reading);
+
     heading = continuous;
     last_reading = now;
+
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
 }
@@ -80,7 +87,8 @@ void moveBase(void *parameters)
 {
   for (;;)
   {
-    if(WiFi.softAPgetStationNum() > 0){
+    if (WiFi.softAPgetStationNum() > 0)
+    {
       float x = vel_data.linear.x;
       float y = vel_data.linear.y;
       float z = vel_data.linear.z;
@@ -89,13 +97,15 @@ void moveBase(void *parameters)
       float az = vel_data.angular.z;
       base.setSpeed(x, y, z, ax, ay, az);
     }
-    else base.setSpeed(0,0,0,0,0,0);
+    else
+      base.setSpeed(0, 0, 0, 0, 0, 0);
     vTaskDelay(10);
   }
 }
 void velCb(const geometry_msgs::Twist &msg_data)
 {
   vel_data = msg_data;
+  sp_heading = heading;
 }
 
 void ICACHE_RAM_ATTR EN1_ISR()
@@ -131,21 +141,54 @@ void countRpm(void *parameters)
   }
 }
 
-
-void readRpm(void *parameters){
-  for(;;){
-    Serial.println("m1 : "+(String)m1.rpm+" m2 : "+(String)m2.rpm+" m3 : "+(String)m3.rpm);
-    vTaskDelay(20/portTICK_PERIOD_MS);
+void readRpm(void *parameters)
+{
+  for (;;)
+  {
+    Serial.println("m1 : " + (String)m1.rpm + " m2 : " + (String)m2.rpm + " m3 : " + (String)m3.rpm);
+    vTaskDelay(20 / portTICK_PERIOD_MS);
   }
 }
 
-void setPidCb(const geometry_msgs::Point &msg_data){
+void setPidCb(const geometry_msgs::Point &msg_data)
+{
   m2.pid(msg_data.x, msg_data.y, msg_data.z, 1000);
   Serial.println(msg_data.x);
 }
 
-void zeroHeadingCb(const std_msgs::Empty &msg_data){
-  
+void gainFromCompass(void *parameters)
+{
+  // float err, d_err, i_err, last_err;
+  for (;;)
+  {
+    if (m1.rpm > 50 && m2.rpm > 50)
+    {
+
+      // belok ke arah m2
+      if ((sp_heading - heading) > 10)
+      {
+        m2.correction = abs(sp_heading - heading) / 10 * 50;
+        m1.correction = 0;
+        Serial.println("tambah rpm m2");
+      }
+
+      // belok ke arah m1
+      else if ((sp_heading - heading) < 10)
+      {
+        m1.correction = abs(sp_heading - heading) / 10 * 50;
+        m2.correction = 0;
+        Serial.println("tambah rpm m1");
+      }
+      else
+      {
+        Serial.println("konstan");
+        m1.correction = 0;
+        m2.correction = 0;
+      }
+    }
+    // Serial.println(sp_heading);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+  }
 }
 
 void setup()
@@ -156,7 +199,6 @@ void setup()
   m2.pid(0.5, 0, 0.001, 1000);
   m3.pid(0.4, 0.001, 0, 1000);
   base.setMotor(m1, m2, m3);
-  // setupOta();
   attachInterrupt(digitalPinToInterrupt(m1.en_a), EN1_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m2.en_a), EN2_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
@@ -170,11 +212,11 @@ void setup()
   xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);
   xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);
   xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);
+  // xTaskCreatePinnedToCore(gainFromCompass, "gain compass", 5000, NULL, 2, &cmp_task, 1);
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);
 }
 void loop()
 {
-  // ArduinoOTA.handle();
   vTaskDelay(1);
 }

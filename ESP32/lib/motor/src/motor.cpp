@@ -113,7 +113,7 @@ void Motor::speed(float target)
     if (pidEnable == true)
     {
         if(i_err > windup) i_err = 0;
-        err = abs(target) - rpm;
+        err = abs(target + correction) - rpm;
         d_err = err - last_err;
         last_err = err;
         i_err = i_err + err;
