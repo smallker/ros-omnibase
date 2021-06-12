@@ -15,13 +15,14 @@ class Kinematic
 private:
     byte mode;
     Motor *m1, *m2, *m3, *m4;
-    
+    int x, y, w;
 public:
     Kinematic(byte mode);
     void setMotor(Motor &m1, Motor &m2);
     void setMotor(Motor &m1, Motor &m2, Motor &m3);
     void setMotor(Motor &m1, Motor &m2, Motor &m3, Motor &m4);
     void setSpeed(float linear_x, float linear_y, float linear_z, float angular_x, float angular_y, float angular_z);
+
 };
 
 #endif

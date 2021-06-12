@@ -110,9 +110,9 @@ void velCb(const geometry_msgs::Twist &msg_data)
 
 void ICACHE_RAM_ATTR EN1_ISR()
 {
-  portENTER_CRITICAL(&mux);
+  // portENTER_CRITICAL(&mux);
   m1.isrHandler();
-  portEXIT_CRITICAL(&mux);
+  // portEXIT_CRITICAL(&mux);
 }
 
 void ICACHE_RAM_ATTR EN2_ISR()
@@ -191,6 +191,14 @@ void gainFromCompass(void *parameters)
   }
 }
 
+void odometry(void *parameters){
+
+  for(;;){
+    Serial.println("m1: "+(String)m1.encoder_tick_acc+" m2: "+(String)m2.encoder_tick_acc+" m3: "+(String)m3.encoder_tick_acc);
+    vTaskDelay(10);
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -215,6 +223,7 @@ void setup()
   // xTaskCreatePinnedToCore(gainFromCompass, "gain compass", 5000, NULL, 2, &cmp_task, 1);
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);
+  xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);
 }
 void loop()
 {

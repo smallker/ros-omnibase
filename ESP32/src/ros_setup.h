@@ -5,6 +5,7 @@
 #include <std_msgs/Int32.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Point.h>
+#include <nav_msgs/Odometry.h>
 
 IPAddress server(192, 168, 43, 101); // ip of your ROS server
 IPAddress ip_address;
@@ -41,7 +42,7 @@ public:
 std_msgs::Int32 heading_data;
 geometry_msgs::Twist vel_data;
 geometry_msgs::Point pid;
-
+nav_msgs::Odometry odom_data;
 // Inisialisasi ros node
 ros::NodeHandle_<WiFiHardware> nh;
 

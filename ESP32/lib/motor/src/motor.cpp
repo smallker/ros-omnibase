@@ -3,38 +3,38 @@
 
 /*
     Mode tanpa encoder
-    a_pin   -> Motor A pin
-    b_pin   -> Motor B pin
+    ma_pin   -> Motor A pin
+    mb_pin   -> Motor B pin
     pwm_pin -> Motor PWM pin
 */
-Motor::Motor(byte a_pin, byte b_pin, byte pwm_pin)
+Motor::Motor(byte ma_pin, byte mb_pin, byte pwm_pin)
 {
-    this->a_pin = a_pin;
-    this->b_pin = b_pin;
+    this->ma_pin = ma_pin;
+    this->mb_pin = mb_pin;
     this->pwm_pin = pwm_pin;
 
-    pinMode(this->a_pin, OUTPUT);
-    pinMode(this->b_pin, OUTPUT);
+    pinMode(this->ma_pin, OUTPUT);
+    pinMode(this->mb_pin, OUTPUT);
     pinMode(this->pwm_pin, OUTPUT);
     // setPwmFrequency();
 }
 /*
     Mode dengan encoder
-    a_pin   -> Motor A pin
-    b_pin   -> Motor B pin
+    ma_pin   -> Motor A pin
+    mb_pin   -> Motor B pin
     pwm_pin -> Motor PWM pin
     en_a    -> Encoder channel A
     en_b    -> Encoder channel B
 */
-Motor::Motor(byte a_pin, byte b_pin, byte pwm_pin, byte en_a, byte en_b)
+Motor::Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b)
 {
-    this->a_pin = a_pin;
-    this->b_pin = b_pin;
+    this->ma_pin = ma_pin;
+    this->mb_pin = mb_pin;
     this->pwm_pin = pwm_pin;
     this->en_a = en_a;
     this->en_b = en_b;
-    pinMode(this->a_pin, OUTPUT);
-    pinMode(this->b_pin, OUTPUT);
+    pinMode(this->ma_pin, OUTPUT);
+    pinMode(this->mb_pin, OUTPUT);
     pinMode(this->pwm_pin, OUTPUT);
     pinMode(this->en_a, INPUT);
     pinMode(this->en_b, INPUT);
@@ -45,22 +45,22 @@ Motor::Motor(byte a_pin, byte b_pin, byte pwm_pin, byte en_a, byte en_b)
 /*
     Mode dengan encoder dengan setting manual PPR
     PPR default 135 (PG-36)
-    a_pin   -> Motor A pin
-    b_pin   -> Motor B pin
+    ma_pin   -> Motor A pin
+    mb_pin   -> Motor B pin
     pwm_pin -> Motor PWM pin
     en_a    -> Encoder channel A
     en_b    -> Encoder channel B
 */
-Motor::Motor(byte a_pin, byte b_pin, byte pwm_pin, byte en_a, byte en_b, int ppr)
+Motor::Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b, int ppr)
 {
-    this->a_pin = a_pin;
-    this->b_pin = b_pin;
+    this->ma_pin = ma_pin;
+    this->mb_pin = mb_pin;
     this->pwm_pin = pwm_pin;
     this->en_a = en_a;
     this->en_b = en_b;
     this->ppr = ppr;
-    pinMode(this->a_pin, OUTPUT);
-    pinMode(this->b_pin, OUTPUT);
+    pinMode(this->ma_pin, OUTPUT);
+    pinMode(this->mb_pin, OUTPUT);
     pinMode(this->pwm_pin, OUTPUT);
     pinMode(this->en_a, INPUT);
     pinMode(this->en_b, INPUT);
@@ -143,8 +143,8 @@ void Motor::forward(int pwm)
 {
     if (abs(pwm) < threshold)
         pwm = 0;
-    digitalWrite(this->a_pin, HIGH);
-    digitalWrite(this->b_pin, LOW);
+    digitalWrite(this->ma_pin, HIGH);
+    digitalWrite(this->mb_pin, LOW);
     analogWrite(this->pwm_pin, pwm);
 }
 
@@ -155,8 +155,8 @@ void Motor::reverse(int pwm)
 {
     if (abs(pwm) < threshold)
         pwm = 0;
-    digitalWrite(this->a_pin, LOW);
-    digitalWrite(this->b_pin, HIGH);
+    digitalWrite(this->ma_pin, LOW);
+    digitalWrite(this->mb_pin, HIGH);
     analogWrite(this->pwm_pin, abs(pwm));
 }
 
@@ -167,8 +167,8 @@ void Motor::reverse(int pwm)
 */
 void Motor::brake()
 {
-    digitalWrite(this->a_pin, HIGH);
-    digitalWrite(this->b_pin, HIGH);
+    digitalWrite(this->ma_pin, HIGH);
+    digitalWrite(this->mb_pin, HIGH);
 }
 #else
 
@@ -178,8 +178,8 @@ void Motor::brake()
 */
 void Motor::brake()
 {
-    digitalWrite(this->a_pin, LOW);
-    digitalWrite(this->b_pin, LOW);
+    digitalWrite(this->ma_pin, LOW);
+    digitalWrite(this->mb_pin, LOW);
 }
 #endif
 
@@ -191,8 +191,8 @@ void Motor::brake()
 */
 void Motor::isrHandler()
 {
-    digitalRead(b_pin) == LOW ? encoder_tick++ : encoder_tick--;
-    digitalRead(b_pin) == LOW ? encoder_tick_acc++ : encoder_tick_acc--;
+    digitalRead(en_b) == LOW ? encoder_tick++ : encoder_tick--;
+    digitalRead(en_b) == LOW ? encoder_tick_acc++ : encoder_tick_acc--;
 }
 
 /*
