@@ -19,7 +19,7 @@ class Motor
     // #define EMS
 private:
     byte ma_pin, mb_pin, pwm_pin;
-    float ppr = 820;
+    float ppr = 810;
     float d_wheel = 0.06;
     float windup, pwm_pid, err, last_err, d_err, i_err;
     void forward(int pwm);

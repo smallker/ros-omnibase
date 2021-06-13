@@ -18,13 +18,12 @@ void Kinematic::setSpeed(float linear_x, float linear_y, float linear_z, float a
         float a = (0.58 * linear_x) + (-0.33 * linear_y) + (0.33 * angular_z);
         float b = (-0.58 * linear_x) + (-0.33 * linear_y) + (0.33 * angular_z);
         float c = (0 * linear_x) + (0.67 * linear_y) + (0.33 * angular_z);
-        float sp_a = a * 6.0 * 1000.0;
-        float sp_b = b * 6.0 * 1000.0;
-        float sp_c = c * 6.0 * 1000.0;
+        float sp_a = (a / (PI * d_wheel)) * 60;
+        float sp_b = (b / (PI * d_wheel)) * 60;
+        float sp_c = (c / (PI * d_wheel)) * 60;
         m1->speed(sp_a);
         m2->speed(sp_b);
         m3->speed(sp_c);
-        // Serial.println("a : "+(String)sp_a+" b : "+(String)sp_b+" c : "+(String)sp_c);
     }
 }
 

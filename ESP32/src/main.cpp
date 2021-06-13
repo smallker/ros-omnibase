@@ -203,7 +203,8 @@ void odometry(void *parameters)
     encoder_data.en_a = m1.encoder_tick_acc;
     encoder_data.en_b = m2.encoder_tick_acc;
     encoder_data.en_c = m3.encoder_tick_acc;
-    vTaskDelay(100);
+    Serial.printf("m1 : %d m2 : %d m3 : %d\n", m1.rpm, m2.rpm, m3.rpm);
+    vTaskDelay(10);
   }
 }
 
@@ -211,9 +212,9 @@ void setup()
 {
   Serial.begin(115200);
   analogWriteFrequency(10000);
-  m1.pid(0.4, 0.001, 0, 1000);
-  m2.pid(0.5, 0, 0.001, 1000);
-  m3.pid(0.4, 0.001, 0, 1000);
+  m1.pid(6, 0.05, 0, 1000);
+  m2.pid(6, 0.05, 0, 1000);
+  m3.pid(6, 0.05, 0, 1000);
   base.setMotor(m1, m2, m3);
   attachInterrupt(digitalPinToInterrupt(m1.en_a), EN1_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m2.en_a), EN2_ISR, FALLING);
