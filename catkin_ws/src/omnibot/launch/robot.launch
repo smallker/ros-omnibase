@@ -40,9 +40,10 @@
   <node pkg="rosserial_python" type="serial_node.py" name="serial_node">
     <param name="port" value="tcp"/>
   </node>
-  <node name="teleop" pkg="omnibot" type="teleop.py" output="screen"/>
+  <node name="teleop" pkg="omnibot" type="node_teleop.py" output="screen"/>
+  <node name="node_play" pkg="omnibot" type="node_play.py" output="screen"/>
 
-  <!-- <node name="rviz" pkg="rviz" type="rviz"
-        args="-d $(find omnibot)/config/view.rviz" /> -->
+  <node name="rviz" pkg="rviz" type="rviz"
+        args="-d $(find omnibot)/config/view.rviz" />
 
 </launch>

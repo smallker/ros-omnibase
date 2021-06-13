@@ -36,6 +36,7 @@ include_directories(
 catkin_install_python(PROGRAMS
    nodes/node_odometry.py
    nodes/node_robot_mock.py
-   nodes/teleop.py
+   nodes/node_teleop.py
+   nodes/node_play.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
