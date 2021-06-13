@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<robot name="mock_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="mock_robot"
+  xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- The robot link description -->
   <link name="base_link">
-      <visual>
+    <visual>
       <geometry>
-        <cylinder length="0.3" radius="0.2"/>
-        <origin xyz="0 0 0.15"/>
+        <cylinder length="0.1" radius="0.21"/>
       </geometry>
     </visual>
   </link>
+
+  <link name="electronic">
+    <visual>
+      <geometry>
+        <cylinder length="0.08" radius="0.1"/>
+      </geometry>
+    </visual>
+  </link>
+  
+  <joint name="electronic_to_base" type="fixed">
+    <parent link="base_link"/>
+    <child link="electronic"/>
+    <origin xyz="0 0 0.05"/>
+  </joint>
+
 </robot>
