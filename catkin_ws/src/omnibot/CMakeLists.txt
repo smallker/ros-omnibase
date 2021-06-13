@@ -15,6 +15,7 @@ add_message_files(
   FILES
   MotorSpeed.msg
   MotorEncoder.msg
+  OmnibaseOdom.msg
 )
 
 

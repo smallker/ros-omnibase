@@ -1,8 +1,8 @@
 {
     "python.autoComplete.extraPaths": [
-        "/opt/ros/noetic/lib/python3/dist-packages",
-        "/home/wahyu/ros-omnibase/devel/lib/python3/dist-packages",
-        "C:/Users/Wahyu/Documents/Github/ros-omnibase/catkin_ws/devel/lib/python3/dist-packages"
+        "C:/Users/Wahyu/Documents/Github/ros-omnibase/catkin_ws/devel\\lib/site-packages",
+        "c:\\opt\\ros\\noetic\\x64\\lib/site-packages",
+        "C:\\opt\\ros\\noetic\\x64\\Lib\\site-packages"
     ],
     "python.analysis.extraPaths": [
         "/opt/ros/noetic/lib/python3/dist-packages",
