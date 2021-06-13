@@ -19,7 +19,8 @@ class Motor
     // #define EMS
 private:
     byte ma_pin, mb_pin, pwm_pin;
-    float ppr = 135;
+    float ppr = 820;
+    float d_wheel = 0.06;
     float windup, pwm_pid, err, last_err, d_err, i_err;
     void forward(int pwm);
     void reverse(int pwm);
@@ -29,6 +30,7 @@ private:
     byte divisor = 3;
     int threshold = 20;
     void setPwmFrequency();
+    double pi = 3.14159265359;
 public:
     volatile float kp, ki, kd;
     volatile float correction;
@@ -47,6 +49,7 @@ public:
     void setPwmFrequency(byte divisor);
     void setPidThreshold(int up_thres, int down_thres);
     void setPwmThreshold(int threshold);
+    float getDistance();
 };
 
 #endif

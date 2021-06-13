@@ -15,14 +15,16 @@ class Kinematic
 private:
     byte mode;
     Motor *m1, *m2, *m3, *m4;
-    int x, y, w;
+    float r_base = 0.112; // jari-jari base (khusus roda 3)
+    double sqrt3 = 1.732050807568877193176604123436845839023590087890625;
 public:
+    float x, y, w;
     Kinematic(byte mode);
     void setMotor(Motor &m1, Motor &m2);
     void setMotor(Motor &m1, Motor &m2, Motor &m3);
     void setMotor(Motor &m1, Motor &m2, Motor &m3, Motor &m4);
     void setSpeed(float linear_x, float linear_y, float linear_z, float angular_x, float angular_y, float angular_z);
-
+    void omniBaseOdom();
 };
 
 #endif

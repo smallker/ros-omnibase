@@ -242,3 +242,11 @@ void Motor::setPwmFrequency()
 #else
 #endif
 }
+
+/*
+    Mendapatkan data total jarak yg ditempuh oleh roda
+    dalam satuan meter
+*/
+float Motor::getDistance(){
+    return (encoder_tick_acc/ppr) * pi * d_wheel;
+}

@@ -25,7 +25,9 @@ void initNode(void *parameters)
     if (client.connected() != 1)
     {
       nh.initNode();
-      nh.advertise(heading_pub);
+      // nh.advertise(heading_pub);
+      // nh.advertise(odom_pub);
+      nh.advertise(encoder_pub);
       nh.subscribe(vel_sub);
       nh.subscribe(pid_sub);
     }
@@ -41,8 +43,10 @@ void publishMessage(void *parameter)
   {
     if (client.connected() == 1)
     {
-      heading_data.data = heading;
-      heading_pub.publish(&heading_data);
+      // heading_data.data = heading;
+      // heading_pub.publish(&heading_data);
+      // odom_pub.publish(&odom_data);
+      encoder_pub.publish(&encoder_data);
     }
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
@@ -110,9 +114,9 @@ void velCb(const geometry_msgs::Twist &msg_data)
 
 void ICACHE_RAM_ATTR EN1_ISR()
 {
-  // portENTER_CRITICAL(&mux);
+  portENTER_CRITICAL(&mux);
   m1.isrHandler();
-  // portEXIT_CRITICAL(&mux);
+  portEXIT_CRITICAL(&mux);
 }
 
 void ICACHE_RAM_ATTR EN2_ISR()
@@ -191,11 +195,15 @@ void gainFromCompass(void *parameters)
   }
 }
 
-void odometry(void *parameters){
+void odometry(void *parameters)
+{
 
-  for(;;){
-    Serial.println("m1: "+(String)m1.encoder_tick_acc+" m2: "+(String)m2.encoder_tick_acc+" m3: "+(String)m3.encoder_tick_acc);
-    vTaskDelay(10);
+  for (;;)
+  {
+    encoder_data.en_a = m1.encoder_tick_acc;
+    encoder_data.en_b = m2.encoder_tick_acc;
+    encoder_data.en_c = m3.encoder_tick_acc;
+    vTaskDelay(100);
   }
 }
 
