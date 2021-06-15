@@ -37,9 +37,6 @@ void resetPositionCb(const std_msgs::Empty &msg_data)
   m1.encoder_tick_acc = 0;
   m2.encoder_tick_acc = 0;
   m3.encoder_tick_acc = 0;
-
-  compass.read();
-  reset_heading = compass.getAzimuth();;
   heading = 0;
 }
 
@@ -98,10 +95,11 @@ void publishMessage(void *parameter)
 
 void readCompass(void *parameters)
 {
+  QMC5883LCompass compass;
   compass.init();
   compass.read();
   last_compass_reading = compass.getAzimuth();
-  long continuous = last_compass_reading;
+  heading = last_compass_reading;
   for (;;)
   {
     compass.read();
@@ -112,18 +110,17 @@ void readCompass(void *parameters)
       if (now - last_compass_reading < 0)
       {
         offset = (360 - last_compass_reading) + now;
-        continuous = continuous + offset;
+        heading = heading + offset;
       }
       else
       {
         offset = (360 - now) + last_compass_reading;
-        continuous = continuous - (last_compass_reading + offset);
+        heading = heading - (last_compass_reading + offset);
       }
     }
     else
-      continuous = continuous + (now - last_compass_reading);
+      heading = heading + (now - last_compass_reading);
 
-    heading = continuous;
     last_compass_reading = now;
     heading_data.data = heading;
     Serial.println(heading);
