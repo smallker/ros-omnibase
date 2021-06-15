@@ -4,13 +4,15 @@ class Pid:
     last_err = 0
     pos = 0
     sp = 0
-    
+    windup = 0.2
     def __init__(self, kp=0, ki=0, kd=0) -> None:
         self.kp = kp
         self.ki = ki
         self.kd = kd
 
     def pid(self) -> float:
+        if self.i_err > self.windup:
+            self.i_err = 0
         err = self.sp - self.pos
         self.d_err = err - self.last_err
         self.last_err = err

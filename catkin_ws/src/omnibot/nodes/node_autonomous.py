@@ -1,6 +1,8 @@
 import rospy
+from std_msgs.msg import Int32, Empty
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
+from geometry_msgs.msg import PoseStamped
 from omnibot.pid import Pid
 
 
@@ -8,9 +10,9 @@ class NodePlay:
     # f = open('log.txt')
     position = 0
     finish = False
-    pid_x = Pid(0.01, 0.0001, 0)
-    pid_y = Pid(0.01, 0.0001, 0)
-    pid_z = Pid(0.01, 0.0001, 0)
+    pid_x = Pid(0.5, 0, 0)
+    pid_y = Pid(0.5, 0, 0)
+    pid_z = Pid(0.5, 0, 0)
 
     def callback(self, msg_data: Odometry):
         self.pid_x.pos = msg_data.pose.pose.position.x
@@ -21,7 +23,7 @@ class NodePlay:
             twist = Twist()
             twist.linear.x = self.pid_y.pid()
             twist.linear.y = - self.pid_x.pid()
-            # twist.angular.z = self.pid_z.pid()
+            twist.angular.z = - self.pid_z.pid()
             self.cmd_vel.publish(twist)
 
         if abs(self.pid_x.sp - self.pid_x.pos) < 0.01 and abs(self.pid_y.sp - self.pid_y.pos) < 0.01:
@@ -36,23 +38,45 @@ class NodePlay:
             else:
                 self.finish = True
 
+    def __reset(self, msg):
+        self.pid_x.sp = 0
+        self.pid_y.sp = 0
+        self.pid_z.sp = 0
+        self.pid_x.reset_err()
+        self.pid_y.reset_err()
+        self.pid_z.reset_err()
+
+    def __setpoint(self, msg:PoseStamped):
+        self.pid_x.sp = msg.pose.position.x
+        self.pid_y.sp = msg.pose.position.y
+        self.pid_z.sp = 0
+        self.pid_x.reset_err()
+        self.pid_y.reset_err()
+        self.pid_z.reset_err()
+        rospy.loginfo(f'x : {self.pid_x.sp} y : {self.pid_y.sp} z : {self.pid_z.sp}')
+        self.finish = False
+
     def __init__(self) -> None:
         # self.arr = self.f.readlines()
-        self.arr = [[1, 0, 1], [0, 0, 1], [0, 1, 1], [0, 0, 1]]
+        # self.arr = [[1, 0, 1], [0, 0, 1], [0, 1, 1], [0, 0, 1]]
         # self.arr = [[0,1,1], [0,0,1]]
+        self.arr = [[0, 0, 0]]
         self.pid_x.sp = self.arr[self.position][0]
         self.pid_y.sp = self.arr[self.position][1]
         self.pid_z.sp = self.arr[self.position][2]
         rospy.init_node('node_autonomous')
-        rospy.loginfo('node autonomous started')
-        self.odom = rospy.Subscriber('odom', Odometry, self.callback)
+        rospy.Subscriber('odom', Odometry, self.callback)
+        # rospy.Subscriber('/sensor/compass', Int32, )
+        rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.__setpoint)
+        rospy.Subscriber('/reset_pos', Empty, self.__reset)
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+        
         # for i in range(arr.__len__()):
         #     print(arr[i])
 
 
 if __name__ == "__main__":
-    # n = NodePlay()
+    n = NodePlay()
 
     while not rospy.is_shutdown():
         pass

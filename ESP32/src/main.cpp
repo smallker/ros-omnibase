@@ -89,7 +89,7 @@ void publishMessage(void *parameter)
       // odom_pub.publish(&odom_data);
       encoder_pub.publish(&encoder_data);
     }
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
 }
 
@@ -97,6 +97,7 @@ void readCompass(void *parameters)
 {
   QMC5883LCompass compass;
   compass.init();
+  compass.setCalibration(-1112, 1340, -1485, 966, -950, 0);
   compass.read();
   last_compass_reading = compass.getAzimuth();
   heading = last_compass_reading;
@@ -123,8 +124,7 @@ void readCompass(void *parameters)
 
     last_compass_reading = now;
     heading_data.data = heading;
-    Serial.println(heading);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
 }
 
@@ -161,50 +161,6 @@ void countRpm(void *parameters)
   }
 }
 
-void readRpm(void *parameters)
-{
-  for (;;)
-  {
-    Serial.println("m1 : " + (String)m1.rpm + " m2 : " + (String)m2.rpm + " m3 : " + (String)m3.rpm);
-    vTaskDelay(20 / portTICK_PERIOD_MS);
-  }
-}
-
-void gainFromCompass(void *parameters)
-{
-  // float err, d_err, i_err, last_err;
-  for (;;)
-  {
-    if (m1.rpm > 50 && m2.rpm > 50)
-    {
-
-      // belok ke arah m2
-      if ((sp_heading - heading) > 10)
-      {
-        m2.correction = abs(sp_heading - heading) / 10 * 50;
-        m1.correction = 0;
-        Serial.println("tambah rpm m2");
-      }
-
-      // belok ke arah m1
-      else if ((sp_heading - heading) < 10)
-      {
-        m1.correction = abs(sp_heading - heading) / 10 * 50;
-        m2.correction = 0;
-        Serial.println("tambah rpm m1");
-      }
-      else
-      {
-        Serial.println("konstan");
-        m1.correction = 0;
-        m2.correction = 0;
-      }
-    }
-    // Serial.println(sp_heading);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-  }
-}
-
 void odometry(void *parameters)
 {
 
@@ -238,7 +194,6 @@ void setup()
   xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0); // Inisialisasi ros node
   xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1); // Task publish ros messsage
   xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1); // Membaca sensor kompas
-  // xTaskCreatePinnedToCore(gainFromCompass, "gain compass", 5000, NULL, 2, &cmp_task, 1);
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1); // Menggerakkan base robot
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1); // Menghitung RPM
   xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1); // Set data untuk message MotorEncoder
