@@ -7,7 +7,7 @@
 
 #define AP
 
-void setupOta(void *parameters)
+void wifiSetup(void *parameters)
 {
     Serial.println("Booting");
     IPAddress local_ip(192, 168, 43, 100);

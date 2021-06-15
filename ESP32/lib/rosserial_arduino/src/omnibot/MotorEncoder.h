@@ -12,11 +12,11 @@ namespace omnibot
   class MotorEncoder : public ros::Msg
   {
     public:
-      typedef float _en_a_type;
+      typedef int32_t _en_a_type;
       _en_a_type en_a;
-      typedef float _en_b_type;
+      typedef int32_t _en_b_type;
       _en_b_type en_b;
-      typedef float _en_c_type;
+      typedef int32_t _en_c_type;
       _en_c_type en_c;
 
     MotorEncoder():
@@ -30,7 +30,7 @@ namespace omnibot
     {
       int offset = 0;
       union {
-        float real;
+        int32_t real;
         uint32_t base;
       } u_en_a;
       u_en_a.real = this->en_a;
@@ -40,7 +40,7 @@ namespace omnibot
       *(outbuffer + offset + 3) = (u_en_a.base >> (8 * 3)) & 0xFF;
       offset += sizeof(this->en_a);
       union {
-        float real;
+        int32_t real;
         uint32_t base;
       } u_en_b;
       u_en_b.real = this->en_b;
@@ -50,7 +50,7 @@ namespace omnibot
       *(outbuffer + offset + 3) = (u_en_b.base >> (8 * 3)) & 0xFF;
       offset += sizeof(this->en_b);
       union {
-        float real;
+        int32_t real;
         uint32_t base;
       } u_en_c;
       u_en_c.real = this->en_c;
@@ -66,7 +66,7 @@ namespace omnibot
     {
       int offset = 0;
       union {
-        float real;
+        int32_t real;
         uint32_t base;
       } u_en_a;
       u_en_a.base = 0;
@@ -77,7 +77,7 @@ namespace omnibot
       this->en_a = u_en_a.real;
       offset += sizeof(this->en_a);
       union {
-        float real;
+        int32_t real;
         uint32_t base;
       } u_en_b;
       u_en_b.base = 0;
@@ -88,7 +88,7 @@ namespace omnibot
       this->en_b = u_en_b.real;
       offset += sizeof(this->en_b);
       union {
-        float real;
+        int32_t real;
         uint32_t base;
       } u_en_c;
       u_en_c.base = 0;
@@ -102,7 +102,7 @@ namespace omnibot
     }
 
     virtual const char * getType() override { return "omnibot/MotorEncoder"; };
-    virtual const char * getMD5() override { return "ee99239eb7b1bba6a3f78e9b553b1f32"; };
+    virtual const char * getMD5() override { return "e4bb3a1f2069e87a3b7e5d6fafd178b4"; };
 
   };
 

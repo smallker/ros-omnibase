@@ -1,4 +1,47 @@
 #include "main.h"
+void ICACHE_RAM_ATTR EN1_ISR()
+{
+  portENTER_CRITICAL(&mux);
+  m1.isrHandler();
+  portEXIT_CRITICAL(&mux);
+}
+
+void ICACHE_RAM_ATTR EN2_ISR()
+{
+  portENTER_CRITICAL(&mux);
+  m2.isrHandler();
+  portEXIT_CRITICAL(&mux);
+}
+
+void ICACHE_RAM_ATTR EN3_ISR()
+{
+  portENTER_CRITICAL(&mux);
+  m3.isrHandler();
+  portEXIT_CRITICAL(&mux);
+}
+
+void setPidCb(const geometry_msgs::Point &msg_data)
+{
+  m3.pid(msg_data.x, msg_data.y, msg_data.z, 1000);
+  Serial.println(msg_data.x);
+}
+
+void velCb(const geometry_msgs::Twist &msg_data)
+{
+  vel_data = msg_data;
+  sp_heading = heading;
+}
+
+void resetPositionCb(const std_msgs::Empty &msg_data)
+{
+  m1.encoder_tick_acc = 0;
+  m2.encoder_tick_acc = 0;
+  m3.encoder_tick_acc = 0;
+
+  compass.read();
+  reset_heading = compass.getAzimuth();;
+  heading = 0;
+}
 
 void blinker(void *parameters)
 {
@@ -25,11 +68,13 @@ void initNode(void *parameters)
     if (client.connected() != 1)
     {
       nh.initNode();
-      // nh.advertise(heading_pub);
+      nh.advertise(heading_pub);
       // nh.advertise(odom_pub);
+      // nh.advertise(imu_pub);
       nh.advertise(encoder_pub);
       nh.subscribe(vel_sub);
       nh.subscribe(pid_sub);
+      nh.subscribe(rst_pos_sub);
     }
     if (client.connected() == 1)
       nh.spinOnce();
@@ -43,8 +88,7 @@ void publishMessage(void *parameter)
   {
     if (client.connected() == 1)
     {
-      // heading_data.data = heading;
-      // heading_pub.publish(&heading_data);
+      heading_pub.publish(&heading_data);
       // odom_pub.publish(&odom_data);
       encoder_pub.publish(&encoder_data);
     }
@@ -54,35 +98,35 @@ void publishMessage(void *parameter)
 
 void readCompass(void *parameters)
 {
-  QMC5883LCompass compass;
   compass.init();
   compass.read();
-  long last_reading = compass.getAzimuth();
-  long continuous = last_reading;
+  last_compass_reading = compass.getAzimuth();
+  long continuous = last_compass_reading;
   for (;;)
   {
     compass.read();
-    long now = compass.getAzimuth();
-    if (abs(now - last_reading) > 300)
+    int now = compass.getAzimuth();
+    if (abs(now - last_compass_reading) > 300)
     {
-      long offset;
-      if (now - last_reading < 0)
+      int offset;
+      if (now - last_compass_reading < 0)
       {
-        offset = (360 - last_reading) + now;
+        offset = (360 - last_compass_reading) + now;
         continuous = continuous + offset;
       }
       else
       {
-        offset = (360 - now) + last_reading;
-        continuous = continuous - (last_reading + offset);
+        offset = (360 - now) + last_compass_reading;
+        continuous = continuous - (last_compass_reading + offset);
       }
     }
     else
-      continuous = continuous + (now - last_reading);
+      continuous = continuous + (now - last_compass_reading);
 
     heading = continuous;
-    last_reading = now;
-
+    last_compass_reading = now;
+    heading_data.data = heading;
+    Serial.println(heading);
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
 }
@@ -106,32 +150,6 @@ void moveBase(void *parameters)
     vTaskDelay(10);
   }
 }
-void velCb(const geometry_msgs::Twist &msg_data)
-{
-  vel_data = msg_data;
-  sp_heading = heading;
-}
-
-void ICACHE_RAM_ATTR EN1_ISR()
-{
-  portENTER_CRITICAL(&mux);
-  m1.isrHandler();
-  portEXIT_CRITICAL(&mux);
-}
-
-void ICACHE_RAM_ATTR EN2_ISR()
-{
-  portENTER_CRITICAL(&mux);
-  m2.isrHandler();
-  portEXIT_CRITICAL(&mux);
-}
-
-void ICACHE_RAM_ATTR EN3_ISR()
-{
-  portENTER_CRITICAL(&mux);
-  m3.isrHandler();
-  portEXIT_CRITICAL(&mux);
-}
 
 void countRpm(void *parameters)
 {
@@ -141,6 +159,7 @@ void countRpm(void *parameters)
     m1.calculateRpm(sampling_time_ms);
     m2.calculateRpm(sampling_time_ms);
     m3.calculateRpm(sampling_time_ms);
+    // Serial.printf("m1 : %d m2 : %d m3 : %d\n", m1.rpm, m2.rpm, m3.rpm);
     vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
   }
 }
@@ -152,12 +171,6 @@ void readRpm(void *parameters)
     Serial.println("m1 : " + (String)m1.rpm + " m2 : " + (String)m2.rpm + " m3 : " + (String)m3.rpm);
     vTaskDelay(20 / portTICK_PERIOD_MS);
   }
-}
-
-void setPidCb(const geometry_msgs::Point &msg_data)
-{
-  m2.pid(msg_data.x, msg_data.y, msg_data.z, 1000);
-  Serial.println(msg_data.x);
 }
 
 void gainFromCompass(void *parameters)
@@ -203,8 +216,7 @@ void odometry(void *parameters)
     encoder_data.en_a = m1.encoder_tick_acc;
     encoder_data.en_b = m2.encoder_tick_acc;
     encoder_data.en_c = m3.encoder_tick_acc;
-    Serial.printf("m1 : %d m2 : %d m3 : %d\n", m1.rpm, m2.rpm, m3.rpm);
-    vTaskDelay(10);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
   }
 }
 
@@ -212,9 +224,9 @@ void setup()
 {
   Serial.begin(115200);
   analogWriteFrequency(10000);
-  m1.pid(6, 0.05, 0, 1000);
-  m2.pid(6, 0.05, 0, 1000);
-  m3.pid(6, 0.05, 0, 1000);
+  m1.pid(7, 0.05, 1, 255);
+  m2.pid(7, 0.05, 1, 255);
+  m3.pid(6, 0.05, 1, 255);
   base.setMotor(m1, m2, m3);
   attachInterrupt(digitalPinToInterrupt(m1.en_a), EN1_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m2.en_a), EN2_ISR, FALLING);
@@ -224,15 +236,15 @@ void setup()
   // ESP32 memiliki 3 core, yaitu core 0, core 1, dan ULP
   // Sebisa mungkin prioritas task disamakan untuk menghindari crash
   // Task yang paling sering dijalankan diberikan prioritas paling tinggi
-  xTaskCreatePinnedToCore(setupOta, "setup ota", 10000, NULL, 5, &wifi_task, 0);
-  xTaskCreatePinnedToCore(blinker, "blink", 1000, NULL, 1, &blink, 1);
-  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);
-  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);
-  xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);
+  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0); // Pengaturan akses poin
+  xTaskCreatePinnedToCore(blinker, "blink", 1000, NULL, 1, &blink, 1); // Test apakah RTOS dapat berjalan
+  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0); // Inisialisasi ros node
+  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1); // Task publish ros messsage
+  xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1); // Membaca sensor kompas
   // xTaskCreatePinnedToCore(gainFromCompass, "gain compass", 5000, NULL, 2, &cmp_task, 1);
-  xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);
-  xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);
-  xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);
+  xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1); // Menggerakkan base robot
+  xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1); // Menghitung RPM
+  xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1); // Set data untuk message MotorEncoder
 }
 void loop()
 {

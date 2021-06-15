@@ -4,7 +4,7 @@
 #include <Wire.h>
 #include <QMC5883LCompass.h>
 #include <kinematic.h>
-#include "ota.h"
+#include "wifi_setup.h"
 #include "ros_setup.h"
 
 // Map input/output ke nama yg mudah diingat
@@ -53,7 +53,8 @@ void odometry(void *parameters);
 // primitive global variable
 volatile int heading;
 volatile int sp_heading;
-
+volatile int reset_heading;
+volatile int last_compass_reading;
 // inisialisasi objek motor
 Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B);
 Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B);
@@ -61,3 +62,5 @@ Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
 
 // inisialisasi objek kinematik
 Kinematic base(OMNIBASE_Y);
+
+QMC5883LCompass compass;
