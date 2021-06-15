@@ -38,6 +38,6 @@ catkin_install_python(PROGRAMS
    nodes/node_odometry.py
    nodes/node_robot_mock.py
    nodes/node_teleop.py
-   nodes/node_play.py
+   nodes/node_autonomous.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )

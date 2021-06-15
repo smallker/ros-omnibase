@@ -43,8 +43,8 @@ class NodePlay:
         self.pid_x.sp = self.arr[self.position][0]
         self.pid_y.sp = self.arr[self.position][1]
         self.pid_z.sp = self.arr[self.position][2]
-        rospy.init_node('node_play')
-        rospy.loginfo('node play started')
+        rospy.init_node('node_autonomous')
+        rospy.loginfo('node autonomous started')
         self.odom = rospy.Subscriber('odom', Odometry, self.callback)
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
         # for i in range(arr.__len__()):
@@ -52,7 +52,7 @@ class NodePlay:
 
 
 if __name__ == "__main__":
-    n = NodePlay()
+    # n = NodePlay()
 
     while not rospy.is_shutdown():
         pass
