@@ -66,9 +66,8 @@ void initNode(void *parameters)
     {
       nh.initNode();
       nh.advertise(heading_pub);
-      // nh.advertise(odom_pub);
-      // nh.advertise(imu_pub);
       nh.advertise(encoder_pub);
+      nh.advertise(imu_pub);
       nh.subscribe(vel_sub);
       nh.subscribe(pid_sub);
       nh.subscribe(rst_pos_sub);
@@ -85,9 +84,11 @@ void publishMessage(void *parameter)
   {
     if (client.connected() == 1)
     {
+      is_ros_ready = true;
       heading_pub.publish(&heading_data);
       // odom_pub.publish(&odom_data);
       encoder_pub.publish(&encoder_data);
+      imu_pub.publish(&imu_data);
     }
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
@@ -95,6 +96,7 @@ void publishMessage(void *parameter)
 
 void readCompass(void *parameters)
 {
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
   QMC5883LCompass compass;
   compass.init();
   compass.setCalibration(-1112, 1340, -1485, 966, -950, 0);
@@ -103,7 +105,9 @@ void readCompass(void *parameters)
   heading = last_compass_reading;
   for (;;)
   {
+    xSemaphoreTake(sem_i2c, portMAX_DELAY);
     compass.read();
+    xSemaphoreGive(sem_i2c);
     int now = compass.getAzimuth();
     if (abs(now - last_compass_reading) > 300)
     {
@@ -173,6 +177,35 @@ void odometry(void *parameters)
   }
 }
 
+void readImu(void *parameters)
+{
+  Adafruit_MPU6050 mpu;
+  if (!mpu.begin())
+  {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1)
+    {
+      vTaskDelay(10);
+    }
+  }
+  mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
+  mpu.setGyroRange(MPU6050_RANGE_250_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+  for (;;)
+  {
+    sensors_event_t a, g, temp;
+    xSemaphoreTake(sem_i2c, portMAX_DELAY);
+    mpu.getEvent(&a, &g, &temp);
+    xSemaphoreGive(sem_i2c);
+    // if (is_ros_ready)
+    //   imu_pub.publish(&imu_data);
+    char buffer[40];
+    sprintf(buffer, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", a.acceleration.x, a.acceleration.y, a.acceleration.z, g.acceleration.x, g.acceleration.y, g.acceleration.z);
+    imu_data.data = buffer;
+    vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -189,14 +222,17 @@ void setup()
   // ESP32 memiliki 3 core, yaitu core 0, core 1, dan ULP
   // Sebisa mungkin prioritas task disamakan untuk menghindari crash
   // Task yang paling sering dijalankan diberikan prioritas paling tinggi
-  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0); // Pengaturan akses poin
-  xTaskCreatePinnedToCore(blinker, "blink", 1000, NULL, 1, &blink, 1); // Test apakah RTOS dapat berjalan
-  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0); // Inisialisasi ros node
+  sem_i2c = xSemaphoreCreateMutex();
+
+  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);   // Pengaturan akses poin
+  xTaskCreatePinnedToCore(blinker, "blink", 1000, NULL, 1, &blink, 1);               // Test apakah RTOS dapat berjalan
+  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);            // Inisialisasi ros node
   xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1); // Task publish ros messsage
-  xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1); // Membaca sensor kompas
-  xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1); // Menggerakkan base robot
-  xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1); // Menghitung RPM
-  xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1); // Set data untuk message MotorEncoder
+  xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);     // Membaca sensor kompas
+  xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);          // Menggerakkan base robot
+  xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);             // Menghitung RPM
+  xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);   // Set data untuk message MotorEncoder
+  xTaskCreatePinnedToCore(readImu, "imu", 20000, NULL, 2, &imu_task, 1);             // Set data untuk message MotorEncoder
 }
 void loop()
 {

@@ -93,7 +93,7 @@ namespace ros {
   template<class Hardware,
            int MAX_SUBSCRIBERS=15,
            int MAX_PUBLISHERS=15,
-           int INPUT_SIZE=2048,
+           int INPUT_SIZE=512,
            int OUTPUT_SIZE=2048>
   class NodeHandle_ : public NodeHandleBase_
   {

@@ -2,13 +2,14 @@
 #include <ros.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Point.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 #include <omnibot/MotorEncoder.h>
 
-#define PUBLISH_DELAY_MS 100
+#define PUBLISH_DELAY_MS 50
 
 IPAddress server(192, 168, 43, 101); // ip of your ROS server
 IPAddress ip_address;
@@ -24,6 +25,7 @@ public:
 
     void init()
     {
+        fcntl(client, F_SETFL, O_NONBLOCK);
         client.connect(server, 11411);
     }
     int read()
@@ -47,13 +49,13 @@ geometry_msgs::Twist vel_data;
 geometry_msgs::Point pid;
 nav_msgs::Odometry odom_data;
 omnibot::MotorEncoder encoder_data;
-sensor_msgs::Imu imu_data;
+std_msgs::String imu_data;
 // Inisialisasi ros node
 ros::NodeHandle_<WiFiHardware> nh;
 // Inisialisasi ros publisher
 ros::Publisher heading_pub("sensor/compass", &heading_data);
 ros::Publisher encoder_pub("motor_encoder", &encoder_data);
-ros::Publisher imu_pub("imu", &imu_data);
+ros::Publisher imu_pub("/string_imu", &imu_data);
 // ros::Publisher odom_pub("odom", &odom_data);
 
 // Inisialisasi fungsi callback subscriber

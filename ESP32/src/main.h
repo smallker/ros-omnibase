@@ -6,7 +6,8 @@
 #include <kinematic.h>
 #include "wifi_setup.h"
 #include "ros_setup.h"
-
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
 // Map input/output ke nama yg mudah diingat
 // kode M untuk pin motor
 #define M1_A    16
@@ -31,6 +32,8 @@
 // saat eksternal interrupt aktif
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
+// RTOS Semaphore object
+static SemaphoreHandle_t sem_i2c;
 // Task handle untuk RTOS
 TaskHandle_t wifi_task;
 TaskHandle_t blink;
@@ -40,6 +43,7 @@ TaskHandle_t cmp_task;
 TaskHandle_t motor_task;
 TaskHandle_t rpm_task;
 TaskHandle_t odometry_task;
+TaskHandle_t imu_task;
 
 // Task RTOS
 void blinker(void *parameters);
@@ -49,11 +53,13 @@ void readCompass(void *parameters);
 void moveBase(void *parameters);
 void countRpm(void *parameters);
 void odometry(void *parameters);
+void readImu(void *parameters);
 
 // primitive global variable
 volatile int heading;
 volatile int sp_heading;
 volatile int last_compass_reading;
+volatile bool is_ros_ready;
 // inisialisasi objek motor
 Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B);
 Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B);
