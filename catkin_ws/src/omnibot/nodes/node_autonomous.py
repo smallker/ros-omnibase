@@ -13,6 +13,7 @@ class NodePlay:
     pid_x = Pid(0.5, 0, 0)
     pid_y = Pid(0.5, 0, 0)
     pid_z = Pid(0.5, 0, 0)
+    twist = Twist()
 
     def callback(self, msg_data: Odometry):
         self.pid_x.pos = msg_data.pose.pose.position.x
@@ -20,13 +21,12 @@ class NodePlay:
         self.pid_z.pos = msg_data.pose.pose.orientation.z
 
         if self.finish is not True:
-            twist = Twist()
-            twist.linear.x = self.pid_y.pid()
-            twist.linear.y = - self.pid_x.pid()
-            twist.angular.z = - self.pid_z.pid()
-            self.cmd_vel.publish(twist)
+            self.twist.linear.x = self.pid_y.pid()
+            self.twist.linear.y = - self.pid_x.pid()
+            self.twist.angular.z = - self.pid_z.pid()
+            self.cmd_vel.publish(self.twist)
 
-        if abs(self.pid_x.sp - self.pid_x.pos) < 0.01 and abs(self.pid_y.sp - self.pid_y.pos) < 0.01:
+        if abs(self.pid_x.sp - self.pid_x.pos) < 0.5 and abs(self.pid_y.sp - self.pid_y.pos) < 0.05:
             self.position += 1
             if self.position < self.arr.__len__():
                 self.pid_x.reset_err()
@@ -39,12 +39,10 @@ class NodePlay:
                 self.finish = True
 
     def __reset(self, msg):
-        self.pid_x.sp = 0
-        self.pid_y.sp = 0
-        self.pid_z.sp = 0
         self.pid_x.reset_err()
         self.pid_y.reset_err()
         self.pid_z.reset_err()
+        self.finish = True
 
     def __setpoint(self, msg:PoseStamped):
         self.pid_x.sp = msg.pose.position.x

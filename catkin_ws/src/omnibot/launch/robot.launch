@@ -38,11 +38,12 @@
     </rosparam>
   </node> -->
 
-  <node pkg="rosserial_python" type="serial_node.py" name="serial_node">
+  <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
     <param name="port" value="tcp"/>
   </node>
   <node name="teleop" pkg="omnibot" type="node_teleop.py" output="screen"/>
   <node name="node_autonomous" pkg="omnibot" type="node_autonomous.py" output="screen"/>
+  <node name="node_imu" pkg="omnibot" type="node_imu.py" output="screen"/>
 
   <node name="rviz" pkg="rviz" type="rviz"
         args="-d $(find omnibot)/config/view.rviz" />
