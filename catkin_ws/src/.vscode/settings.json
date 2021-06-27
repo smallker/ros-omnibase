@@ -1,0 +1,9 @@
+{
+    "ros.distro": "noetic",
+    "python.autoComplete.extraPaths": [
+        "C:/Users/Wahyu/Documents/Github/ros-omnibase/catkin_ws/devel\\lib/site-packages",
+        "c:\\opt\\ros\\noetic\\x64\\lib/site-packages",
+        "C:\\opt\\ros\\noetic\\x64\\Lib\\site-packages"
+    ],
+    "python.pythonPath": "c:\\opt\\ros\\noetic\\x64\\python.exe"
+}
