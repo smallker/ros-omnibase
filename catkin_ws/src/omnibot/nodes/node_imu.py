@@ -44,4 +44,5 @@ class NodeImu:
 if __name__ == "__main__":
     n = NodeImu()
     while not rospy.is_shutdown():
-        pass
+        rospy.spin()
+    

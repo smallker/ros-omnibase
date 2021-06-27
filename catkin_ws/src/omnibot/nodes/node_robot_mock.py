@@ -25,7 +25,7 @@ class RobotMockNode:
                 self.m_enc.en_a += int((self.m_speed.a/2 * math.pi) * self.ppr / 10)
                 self.m_enc.en_b += int((self.m_speed.b/2 * math.pi) * self.ppr / 10)
                 self.m_enc.en_c += int((self.m_speed.c/2 * math.pi) * self.ppr / 10)
-                self.cmp.data = int(-180 * math.pi * ((self.m_enc.en_a + self.m_enc.en_b + self.m_enc.en_c) / (self.base_wheel * 3)))
+                self.cmp.data = int((math.pi/180)*((self.m_enc.en_a + self.m_enc.en_b + self.m_enc.en_c) / (self.base_wheel * 3)))
             rospy.sleep(0.1)
 
     def publish_encoder(self):

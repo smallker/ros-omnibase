@@ -1,14 +1,9 @@
 {
-    "python.autoComplete.extraPaths": [
-        "C:\\Users\\Wahyu\\Documents\\Github\\ros-omnibase\\catkin_ws\\devel\\lib\\site-packages",
-        "/opt/ros/noetic/lib/python3/dist-packages",
-        "/home/wahyu/ros-omnibase/devel/lib/python3/dist-packages"
-    ],
+    "python.autoComplete.extraPaths": ["src"],
     "python.analysis.extraPaths": [
-        "C:\\Users\\Wahyu\\Documents\\Github\\ros-omnibase\\catkin_ws\\devel\\lib\\site-packages",
-        "C:\\Users\\Wahyu\\Documents\\Github\\ros-omnibase\\catkin_ws\\src\\omnibot\\src\\omnibot",
-        "/opt/ros/noetic/lib/python3/dist-packages",
-        "/home/wahyu/ros-omnibase/devel/lib/python3/dist-packages"
+        "src",
+        "C:\\Users\\Wahyu\\Documents\\Github\\ros-omnibase\\catkin_ws\\devel\\lib\\site-packages"
     ],
-    "ros.distro": "noetic"
+    "ros.distro": "noetic",
+    "python.pythonPath": "c:\\opt\\ros\\noetic\\x64\\python.exe"
 }

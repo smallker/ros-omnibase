@@ -1,3 +1,4 @@
+from math import pi
 import rospy
 from std_msgs.msg import Int32, Empty
 from nav_msgs.msg import Odometry
@@ -12,21 +13,21 @@ class NodePlay:
     finish = False
     pid_x = Pid(0.5, 0, 0)
     pid_y = Pid(0.5, 0, 0)
-    pid_z = Pid(0.5, 0, 0)
+    pid_z = Pid(1, 0, 0)
     twist = Twist()
 
-    def callback(self, msg_data: Odometry):
+    def odom_callback(self, msg_data: Odometry):
         self.pid_x.pos = msg_data.pose.pose.position.x
         self.pid_y.pos = msg_data.pose.pose.position.y
-        self.pid_z.pos = msg_data.pose.pose.orientation.z
-
+        # self.pid_z.pos = msg_data.pose.pose.orientation.z
+        # rospy.loginfo(f'x : {self.pid_x.last_err} y : {self.pid_y.last_err} z : {self.pid_z.last_err}')
         if self.finish is not True:
             self.twist.linear.x = self.pid_y.pid()
             self.twist.linear.y = - self.pid_x.pid()
-            self.twist.angular.z = - self.pid_z.pid()
+            self.twist.angular.z = self.pid_z.pid()
+            # rospy.loginfo(f'zErr : {self.pid_z.last_err} pid : {self.twist.angular.z}')
             self.cmd_vel.publish(self.twist)
-
-        if abs(self.pid_x.sp - self.pid_x.pos) < 0.5 and abs(self.pid_y.sp - self.pid_y.pos) < 0.05:
+        if abs(self.pid_x.sp - self.pid_x.pos) < 0.05 and abs(self.pid_y.sp - self.pid_y.pos) < 0.05:
             self.position += 1
             if self.position < self.arr.__len__():
                 self.pid_x.reset_err()
@@ -37,6 +38,10 @@ class NodePlay:
                 self.pid_z.sp = self.arr[self.position][2]
             else:
                 self.finish = True
+                self.twist.linear.x = 0
+                self.twist.linear.y = 0
+                self.twist.angular.z = 0
+                self.cmd_vel.publish(self.twist)
 
     def __reset(self, msg):
         self.pid_x.reset_err()
@@ -54,6 +59,9 @@ class NodePlay:
         rospy.loginfo(f'x : {self.pid_x.sp} y : {self.pid_y.sp} z : {self.pid_z.sp}')
         self.finish = False
 
+    def __cmp_callback(self, msg:Int32):
+        self.pid_z.pos = msg.data * pi / 180
+
     def __init__(self) -> None:
         # self.arr = self.f.readlines()
         # self.arr = [[1, 0, 1], [0, 0, 1], [0, 1, 1], [0, 0, 1]]
@@ -63,8 +71,8 @@ class NodePlay:
         self.pid_y.sp = self.arr[self.position][1]
         self.pid_z.sp = self.arr[self.position][2]
         rospy.init_node('node_autonomous')
-        rospy.Subscriber('odom', Odometry, self.callback)
-        # rospy.Subscriber('/sensor/compass', Int32, )
+        rospy.Subscriber('odom', Odometry, self.odom_callback)
+        rospy.Subscriber('/sensor/compass', Int32, self.__cmp_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.__setpoint)
         rospy.Subscriber('/reset_pos', Empty, self.__reset)
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
@@ -77,4 +85,4 @@ if __name__ == "__main__":
     n = NodePlay()
 
     while not rospy.is_shutdown():
-        pass
+        rospy.spin()
