@@ -30,13 +30,13 @@
     </rosparam>
   </node>
 
-  <node name="node_robot_mock" pkg="omnibot" type="node_robot_mock.py" output="screen">
+  <!-- <node name="node_robot_mock" pkg="omnibot" type="node_robot_mock.py" output="screen">
     <rosparam subst_value="true">
       d_wheel: $(arg d_wheel)
       ppr: $(arg ppr)
       wheel_base: $(arg wheel_base)
     </rosparam>
-  </node>
+  </node> -->
 
   <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
     <param name="port" value="tcp"/>
