@@ -67,7 +67,7 @@ void initNode(void *parameters)
       nh.initNode();
       nh.advertise(heading_pub);
       nh.advertise(encoder_pub);
-      nh.advertise(imu_pub);
+      // nh.advertise(imu_pub);
       nh.subscribe(vel_sub);
       nh.subscribe(pid_sub);
       nh.subscribe(rst_pos_sub);
@@ -88,7 +88,7 @@ void publishMessage(void *parameter)
       heading_pub.publish(&heading_data);
       // odom_pub.publish(&odom_data);
       encoder_pub.publish(&encoder_data);
-      imu_pub.publish(&imu_data);
+      // imu_pub.publish(&imu_data);
     }
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
@@ -232,7 +232,7 @@ void setup()
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);          // Menggerakkan base robot
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);             // Menghitung RPM
   xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);   // Set data untuk message MotorEncoder
-  xTaskCreatePinnedToCore(readImu, "imu", 20000, NULL, 2, &imu_task, 1);             // Set data untuk message MotorEncoder
+  // xTaskCreatePinnedToCore(readImu, "imu", 20000, NULL, 2, &imu_task, 1);             // Set data untuk message MotorEncoder
 }
 void loop()
 {
