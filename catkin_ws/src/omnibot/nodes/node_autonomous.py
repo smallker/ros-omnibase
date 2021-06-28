@@ -87,8 +87,8 @@ class NodePlay:
         rospy.Subscriber('/sensor/compass', Int32, self.__cmp_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.__setpoint)
         rospy.Subscriber('/reset_pos', Empty, self.__reset)
-        rospy.Subscriber('/set_pid', Point, self.__set_pid)
-        rospy.Subscriber('/set_angular_pid', Point, self.__set_angular_pid)
+        # rospy.Subscriber('/set_pid', Point, self.__set_pid)
+        # rospy.Subscriber('/set_angular_pid', Point, self.__set_angular_pid)
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
         
         # for i in range(arr.__len__()):

@@ -94,7 +94,7 @@ namespace ros {
            int MAX_SUBSCRIBERS=15,
            int MAX_PUBLISHERS=15,
            int INPUT_SIZE=512,
-           int OUTPUT_SIZE=2048>
+           int OUTPUT_SIZE=1024>
   class NodeHandle_ : public NodeHandleBase_
   {
     protected:

@@ -69,12 +69,11 @@ void initNode(void *parameters)
       nh.advertise(encoder_pub);
       // nh.advertise(imu_pub);
       nh.subscribe(vel_sub);
-      nh.subscribe(pid_sub);
+      // nh.subscribe(pid_sub);
       nh.subscribe(rst_pos_sub);
     }
     if (client.connected() == 1)
       nh.spinOnce();
-    vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
 
@@ -105,9 +104,9 @@ void readCompass(void *parameters)
   heading = last_compass_reading;
   for (;;)
   {
-    xSemaphoreTake(sem_i2c, portMAX_DELAY);
+    // xSemaphoreTake(sem_i2c, portMAX_DELAY);
     compass.read();
-    xSemaphoreGive(sem_i2c);
+    // xSemaphoreGive(sem_i2c);
     int now = compass.getAzimuth();
     if (abs(now - last_compass_reading) > 300)
     {
@@ -222,7 +221,7 @@ void setup()
   // ESP32 memiliki 3 core, yaitu core 0, core 1, dan ULP
   // Sebisa mungkin prioritas task disamakan untuk menghindari crash
   // Task yang paling sering dijalankan diberikan prioritas paling tinggi
-  sem_i2c = xSemaphoreCreateMutex();
+  // sem_i2c = xSemaphoreCreateMutex();
 
   xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);   // Pengaturan akses poin
   xTaskCreatePinnedToCore(blinker, "blink", 1000, NULL, 1, &blink, 1);               // Test apakah RTOS dapat berjalan
@@ -232,7 +231,7 @@ void setup()
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);          // Menggerakkan base robot
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);             // Menghitung RPM
   xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);   // Set data untuk message MotorEncoder
-  // xTaskCreatePinnedToCore(readImu, "imu", 20000, NULL, 2, &imu_task, 1);             // Set data untuk message MotorEncoder
+  // xTaskCreatePinnedToCore(readImu, "imu", 20000, NULL, 2, &imu_task, 1);          
 }
 void loop()
 {

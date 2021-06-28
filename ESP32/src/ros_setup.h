@@ -9,7 +9,7 @@
 #include <sensor_msgs/Imu.h>
 #include <omnibot/MotorEncoder.h>
 
-#define PUBLISH_DELAY_MS 50
+#define PUBLISH_DELAY_MS 100
 
 IPAddress server(192, 168, 43, 101); // ip of your ROS server
 IPAddress ip_address;
