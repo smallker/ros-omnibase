@@ -1,4 +1,5 @@
 from math import pi
+from time import time
 import rospy
 from std_msgs.msg import Int32, Empty
 from nav_msgs.msg import Odometry
@@ -15,7 +16,7 @@ class NodePlay:
     pid_y = Pid(0.5, 0, 0.2)
     pid_z = Pid(0.8, 0, 0.25)
     twist = Twist()
-
+    start_timestamp = 0
     def odom_callback(self, msg_data: Odometry):
         self.pid_x.pos = msg_data.pose.pose.position.x
         self.pid_y.pos = msg_data.pose.pose.position.y
@@ -27,6 +28,8 @@ class NodePlay:
             self.twist.angular.z = - self.pid_z.pid()
             # rospy.loginfo(f'zErr : {self.pid_z.last_err} pid : {self.twist.angular.z}')
             self.cmd_vel.publish(self.twist)
+            timestamp = int(time() * 1000)
+            rospy.loginfo(f'{timestamp - self.start_timestamp} {self.pid_x.pos} {self.pid_y.pos} {self.pid_z.pos}')
         if abs(self.pid_x.sp - self.pid_x.pos) < 0.01 and abs(self.pid_y.sp - self.pid_y.pos) < 0.01 and abs(self.pid_z.sp - self.pid_z.pos) < 0.01:
             self.position += 1
             if self.position < self.arr.__len__():
@@ -42,6 +45,7 @@ class NodePlay:
                 self.twist.linear.y = 0
                 self.twist.angular.z = 0
                 self.cmd_vel.publish(self.twist)
+                rospy.loginfo('finish')
 
     def __reset(self, msg):
         self.pid_x.reset_err()
@@ -60,7 +64,8 @@ class NodePlay:
         self.pid_x.reset_err()
         self.pid_y.reset_err()
         self.pid_z.reset_err()
-        rospy.loginfo(f'x : {self.pid_x.sp} y : {self.pid_y.sp} z : {self.pid_z.sp}')
+        self.start_timestamp = int(time() * 1000)
+        # rospy.loginfo(f'x : {self.pid_x.sp} y : {self.pid_y.sp} z : {self.pid_z.sp}')
         self.finish = False
 
     def __cmp_callback(self, msg:Int32):
