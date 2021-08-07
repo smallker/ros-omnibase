@@ -15,10 +15,10 @@ class OdometryNode:
     def __init__(self):
         self.m_encoder = MotorEncoder()
     def main(self):
-        rospy.init_node('node_odometry')
+        rospy.init_node('node_odometry', anonymous=True)
         self.odom_pub = rospy.Publisher('odom', Odometry, queue_size=10)
         self.tf_pub = TransformBroadcaster()
-        self.rate = float(rospy.get_param('~rate', 10.0))
+        self.rate = float(rospy.get_param('~rate', 150.0))
         self.baseFrameID = rospy.get_param('~base_frame_id', 'base_link')
         self.odomFrameID = rospy.get_param('~odom_frame_id', 'odom')
         self.d_wheel = rospy.get_param('~d_wheel', 0.06)

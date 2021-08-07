@@ -7,7 +7,7 @@ import threading
 import rospy
 
 from geometry_msgs.msg import Twist
-
+from std_msgs.msg import Empty
 import sys, select, os
 if os.name == 'nt':
   import msvcrt
@@ -195,6 +195,9 @@ if __name__=="__main__":
         print(vels(speed,turn))
         while(1):
             key = getKey()
+            if key == '3':
+                rospy.Publisher(f'/reset_pos', Empty, queue_size=1).publish()
+                rospy.loginfo('RESET POSITION')
             if key in moveBindings.keys():
                 x = moveBindings[key][0]
                 y = moveBindings[key][1]

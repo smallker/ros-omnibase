@@ -29,7 +29,7 @@ class NodePlay:
             # rospy.loginfo(f'zErr : {self.pid_z.last_err} pid : {self.twist.angular.z}')
             self.cmd_vel.publish(self.twist)
             timestamp = int(time() * 1000)
-            rospy.loginfo(f'{timestamp - self.start_timestamp} {self.pid_x.pos} {self.pid_y.pos} {self.pid_z.pos}')
+            # rospy.loginfo(f'{timestamp - self.start_timestamp} {self.pid_x.pos} {self.pid_y.pos} {self.pid_z.pos}')
         if abs(self.pid_x.sp - self.pid_x.pos) < 0.01 and abs(self.pid_y.sp - self.pid_y.pos) < 0.01 and abs(self.pid_z.sp - self.pid_z.pos) < 0.01:
             self.position += 1
             if self.position < self.arr.__len__():
@@ -45,7 +45,7 @@ class NodePlay:
                 self.twist.linear.y = 0
                 self.twist.angular.z = 0
                 self.cmd_vel.publish(self.twist)
-                rospy.loginfo('finish')
+                # rospy.loginfo('finish')
 
     def __reset(self, msg):
         self.pid_x.reset_err()
@@ -87,7 +87,7 @@ class NodePlay:
         self.pid_x.sp = self.arr[self.position][0]
         self.pid_y.sp = self.arr[self.position][1]
         self.pid_z.sp = self.arr[self.position][2]
-        rospy.init_node('node_autonomous')
+        rospy.init_node('node_autonomous', anonymous=True)
         rospy.Subscriber('odom', Odometry, self.odom_callback)
         rospy.Subscriber('/sensor/compass', Int32, self.__cmp_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.__setpoint)
@@ -102,6 +102,8 @@ class NodePlay:
 
 if __name__ == "__main__":
     n = NodePlay()
-
+    rate = float(rospy.get_param('~rate', 150.0))
+    rate = rospy.Rate(rate)
     while not rospy.is_shutdown():
         rospy.spin()
+        rate.sleep()
