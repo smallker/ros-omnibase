@@ -46,6 +46,7 @@ TaskHandle_t odometry_task;
 TaskHandle_t imu_task;
 
 // Task RTOS
+
 void blinker(void *parameters);
 void initNode(void *parameters);
 void publishMessage(void *parameter);
@@ -53,13 +54,13 @@ void readCompass(void *parameters);
 void moveBase(void *parameters);
 void countRpm(void *parameters);
 void odometry(void *parameters);
-void readImu(void *parameters);
 
 // primitive global variable
 volatile int heading;
 volatile int sp_heading;
 volatile int last_compass_reading;
 volatile bool is_ros_ready;
+volatile unsigned long last_command_time;
 // inisialisasi objek motor
 Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B);
 Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B);

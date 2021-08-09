@@ -30,6 +30,7 @@ void velCb(const geometry_msgs::Twist &msg_data)
 {
   vel_data = msg_data;
   sp_heading = heading;
+  last_command_time = millis();
 }
 
 void resetPositionCb(const std_msgs::Empty &msg_data)
@@ -40,20 +41,33 @@ void resetPositionCb(const std_msgs::Empty &msg_data)
   heading = 0;
 }
 
+/*
+  LED akan berkedip setiap 300ms saat robot
+  belum tersambung dan berkedip setiap 2s
+  ketika robot tersambung ke ROS
+*/
 void blinker(void *parameters)
 {
   pinMode(LED_BUILTIN, OUTPUT);
   for (;;)
   {
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    vTaskDelay(500);
+    vTaskDelay(is_ros_ready ? 2000 : 300);
   }
 }
 
+/*
+  Inisialisasi ros node
+  Mendaftarkan publisher dan subscriber
+  Publisher :
+  - heading_pub -> data kompas
+  - encoder_pub -> data rotary encoder
+  Subscriber :
+  - vel_sub     -> data setpoint kecepatan robot
+  - rst_pos_sub -> reset posisi robot
+*/
 void initNode(void *parameters)
 {
-  // Inisialisasi ros node
-  // Mendaftarkan publisher dan subscriber
   for (;;)
   {
     while (true)
@@ -77,6 +91,11 @@ void initNode(void *parameters)
   }
 }
 
+/*
+  Mempublish message pada topik ROS
+  - heading_pub untuk mengirim data kompas
+  - encoder_pub untuk mengirim data rotary encoder
+*/
 void publishMessage(void *parameter)
 {
   for (;;)
@@ -85,14 +104,17 @@ void publishMessage(void *parameter)
     {
       is_ros_ready = true;
       heading_pub.publish(&heading_data);
-      // odom_pub.publish(&odom_data);
       encoder_pub.publish(&encoder_data);
-      // imu_pub.publish(&imu_data);
     }
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
 }
 
+/*
+  Data kompas akan terus increment/decrement ketika robot terus
+  menerus berputar. Kompas perlu dikalibrasi terlebih dahulu
+  menggunakan contoh program pada library
+*/
 void readCompass(void *parameters)
 {
   vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -104,9 +126,7 @@ void readCompass(void *parameters)
   heading = last_compass_reading;
   for (;;)
   {
-    // xSemaphoreTake(sem_i2c, portMAX_DELAY);
     compass.read();
-    // xSemaphoreGive(sem_i2c);
     int now = compass.getAzimuth();
     if (abs(now - last_compass_reading) > 300)
     {
@@ -131,11 +151,18 @@ void readCompass(void *parameters)
   }
 }
 
+/*
+  Robot menerima perintah dari rostopic cmd_vel
+  Robot dapat bergerak ketika PC terkoneksi ke AP robot dan
+  perintah terakhir kurang dari 0.5 detik yang lalu
+  untuk menghindari robot bergerak terus menerus ketika
+  terputus dari PC
+*/
 void moveBase(void *parameters)
 {
   for (;;)
   {
-    if (WiFi.softAPgetStationNum() > 0)
+    if (WiFi.softAPgetStationNum() > 0 && (millis() - last_command_time < 500))
     {
       float x = vel_data.linear.x;
       float y = vel_data.linear.y;
@@ -151,6 +178,10 @@ void moveBase(void *parameters)
   }
 }
 
+/*
+  Menghitung RPM motor, jeda kalkulasi
+  20 ms
+*/
 void countRpm(void *parameters)
 {
   const int sampling_time_ms = 20;
@@ -164,6 +195,11 @@ void countRpm(void *parameters)
   }
 }
 
+/*
+  Membaca data encoder terkini dan
+  mengcopy nilainya ke data pada topik
+  encoder
+*/
 void odometry(void *parameters)
 {
 
@@ -173,35 +209,6 @@ void odometry(void *parameters)
     encoder_data.en_b = m2.encoder_tick_acc;
     encoder_data.en_c = m3.encoder_tick_acc;
     vTaskDelay(100 / portTICK_PERIOD_MS);
-  }
-}
-
-void readImu(void *parameters)
-{
-  Adafruit_MPU6050 mpu;
-  if (!mpu.begin())
-  {
-    Serial.println("Failed to find MPU6050 chip");
-    while (1)
-    {
-      vTaskDelay(10);
-    }
-  }
-  mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
-  mpu.setGyroRange(MPU6050_RANGE_250_DEG);
-  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-  for (;;)
-  {
-    sensors_event_t a, g, temp;
-    xSemaphoreTake(sem_i2c, portMAX_DELAY);
-    mpu.getEvent(&a, &g, &temp);
-    xSemaphoreGive(sem_i2c);
-    // if (is_ros_ready)
-    //   imu_pub.publish(&imu_data);
-    char buffer[40];
-    sprintf(buffer, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", a.acceleration.x, a.acceleration.y, a.acceleration.z, g.acceleration.x, g.acceleration.y, g.acceleration.z);
-    imu_data.data = buffer;
-    vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
 }
 
@@ -231,7 +238,6 @@ void setup()
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);          // Menggerakkan base robot
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);             // Menghitung RPM
   xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);   // Set data untuk message MotorEncoder
-  // xTaskCreatePinnedToCore(readImu, "imu", 20000, NULL, 2, &imu_task, 1);          
 }
 void loop()
 {

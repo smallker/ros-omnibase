@@ -66,7 +66,7 @@
 #define MODE_MSG_CHECKSUM   8   // checksum for msg and topic id
 
 
-#define MSG_TIMEOUT 20  //20 milliseconds to recieve all of message data
+#define MSG_TIMEOUT 150  //20 milliseconds to recieve all of message data
 
 #include "msg.h"
 
