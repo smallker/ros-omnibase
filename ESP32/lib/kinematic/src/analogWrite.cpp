@@ -1,3 +1,4 @@
+#if defined(ESP32)
 #include "analogWrite.h"
 
 analog_write_channel_t _analog_write_channels[16] = {
@@ -104,3 +105,4 @@ void analogWrite(uint8_t pin, uint32_t value, uint32_t valueMax)
     ledcWrite(channel, duty);
   }
 }
+#endif

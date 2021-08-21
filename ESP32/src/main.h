@@ -1,13 +1,10 @@
 #include <Arduino.h>
 #include <analogWrite.h>
 #include <FreeRTOS.h>
-#include <Wire.h>
 #include <QMC5883LCompass.h>
 #include <kinematic.h>
 #include "wifi_setup.h"
 #include "ros_setup.h"
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>
 // Map input/output ke nama yg mudah diingat
 // kode M untuk pin motor
 #define M1_A    16
@@ -32,8 +29,6 @@
 // saat eksternal interrupt aktif
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
-// RTOS Semaphore object
-static SemaphoreHandle_t sem_i2c;
 // Task handle untuk RTOS
 TaskHandle_t wifi_task;
 TaskHandle_t blink;
