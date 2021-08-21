@@ -20,31 +20,7 @@
     <param name="rate" value="150.0"/>
   </node>
 
-  <node name="node_odometry" pkg="omnibot" type="node_odometry.py">
-    <rosparam subst_value="true">
-      ticks_per_meter: $(arg ticks_per_meter)
-      wheel_separation: $(arg wheel_separation)
-      d_wheel: $(arg d_wheel)
-      ppr: $(arg ppr)
-      wheel_base: $(arg wheel_base)
-    </rosparam>
-  </node>
-
-  <node name="node_robot_mock" pkg="omnibot" type="node_robot_mock.py" output="screen">
-    <rosparam subst_value="true">
-      d_wheel: $(arg d_wheel)
-      ppr: $(arg ppr)
-      wheel_base: $(arg wheel_base)
-    </rosparam>
-  </node>
-
-  <!-- <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
-    <param name="port" value="tcp"/>
-  </node> -->
-  <node name="teleop" pkg="omnibot" type="node_teleop.py" output="screen"/>
   <node name="node_autonomous" pkg="omnibot" type="node_autonomous.py" output="screen"/>
-  <!-- <node name="node_imu" pkg="omnibot" type="node_imu.py" output="screen"/> -->
-
   <node name="rviz" pkg="rviz" type="rviz"
         args="-d $(find omnibot)/config/view.rviz" />
 

@@ -9,13 +9,13 @@ from tf.transformations import quaternion_from_euler, euler_from_quaternion
 from std_msgs.msg import Int32
 from omnibot import pose, odometry
 from omnibot.msg import MotorEncoder
-
+from time import time
 class OdometryNode:
 
     def __init__(self):
         self.m_encoder = MotorEncoder()
     def main(self):
-        rospy.init_node('node_odometry', anonymous=True)
+        rospy.init_node('node_odometry')
         self.odom_pub = rospy.Publisher('odom', Odometry, queue_size=10)
         self.tf_pub = TransformBroadcaster()
         self.rate = float(rospy.get_param('~rate', 150.0))
@@ -25,7 +25,7 @@ class OdometryNode:
         self.base_wheel = rospy.get_param('~wheel_base', 0.11)
         self.ppr = rospy.get_param('~ppr', 900)
         self.odometry = odometry.Odometry(self.d_wheel, self.base_wheel, self.ppr)
-        # self.odometry.set_time(rospy.get_time())
+        self.odometry.set_time(rospy.get_time())
         rate = rospy.Rate(self.rate)
         self.nodeName = rospy.get_name()
 
@@ -45,13 +45,13 @@ class OdometryNode:
         self.odometry.update_compass(msg.data)
 
     def publish(self):
-        self.odometry.update_encoder(self.m_encoder)
-        self.odometry.update_pose(rospy.get_time())
         now = rospy.get_rostime()
+        self.odometry.update_encoder(self.m_encoder)
+        self.odometry.update_pose(now.to_time())
         pose = self.odometry.get_pose()
         q = quaternion_from_euler(0, 0, pose.theta)
         self.tf_pub.sendTransform(
-            (pose.x, pose.y, 0),
+            (pose.x, pose.y, pose.theta),
             (q[0], q[1], q[2], q[3]),
             now,
             self.baseFrameID,
@@ -84,7 +84,6 @@ class OdometryNode:
         pose.y = msg.pose.pose.position.y
         pose.theta = yaw
 
-        rospy.loginfo('Setting initial pose to %s', pose)
         self.odometry.set_pose(pose)
 if __name__ == '__main__':
     try:
