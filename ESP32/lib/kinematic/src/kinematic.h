@@ -26,7 +26,7 @@ public:
     void setMotor(Motor &m1, Motor &m2, Motor &m3);
     void setMotor(Motor &m1, Motor &m2, Motor &m3, Motor &m4);
     void setSpeed(float linear_x, float linear_y, float linear_z, float angular_x, float angular_y, float angular_z);
-    void omniBaseOdom();
+    void omnibaseOdom(float heading_rad);
 };
 
 #endif

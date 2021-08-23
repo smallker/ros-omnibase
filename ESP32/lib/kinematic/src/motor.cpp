@@ -112,14 +112,17 @@ void Motor::speed(float target)
 {
     if (pidEnable == true)
     {
-        if(i_err > windup) i_err = 0;
-        err = abs(target + correction) - rpm;
+        if (i_err > windup)
+            i_err = 0;
+        err = abs(target + correction) - rpm_abs;
         d_err = err - last_err;
         last_err = err;
         i_err = i_err + err;
         pwm_pid = (kp * err) + (kd * d_err) + (ki * i_err);
-        if(pwm_pid <= min_pwm) pwm_pid = min_pwm;
-        if(pwm_pid >= max_pwm) pwm_pid = max_pwm;
+        if (pwm_pid <= min_pwm)
+            pwm_pid = min_pwm;
+        if (pwm_pid >= max_pwm)
+            pwm_pid = max_pwm;
         target > 0 ? forward(pwm_pid) : reverse(pwm_pid);
         // Serial.print("sp : ");
         // Serial.print(target);
@@ -210,7 +213,9 @@ void Motor::calculateRpm(int sampling_time_ms)
 #if (SAM3XA_SERIES) || (SAM3N_SERIES) || (SAM3S_SERIES)
     sampling_time_ms = sampling_time_ms / 2;
 #endif
-    rpm = abs((encoder_tick / ppr) * (60000 / sampling_time_ms));
+    rpm = (encoder_tick / ppr) * (60000 / sampling_time_ms);
+    rpm_abs = abs(rpm);
+    speed_ms = (PI * d_wheel/2) / 6000.000 * rpm;
     encoder_tick = 0;
 }
 
@@ -247,6 +252,7 @@ void Motor::setPwmFrequency()
     Mendapatkan data total jarak yg ditempuh oleh roda
     dalam satuan meter
 */
-float Motor::getDistance(){
-    return (encoder_tick_acc/ppr) * pi * d_wheel;
+float Motor::getDistance()
+{
+    return (encoder_tick_acc / ppr) * pi * d_wheel;
 }

@@ -35,7 +35,9 @@ public:
     volatile float kp, ki, kd;
     volatile float correction;
     byte en_a, en_b;
-    volatile int rpm;
+    volatile float rpm_abs;
+    volatile float rpm;
+    volatile float speed_ms;
     volatile int encoder_tick;
     volatile long encoder_tick_acc;
     Motor(byte ma_pin, byte mb_pin, byte pwm_pin);

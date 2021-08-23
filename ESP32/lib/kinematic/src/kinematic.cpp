@@ -27,13 +27,14 @@ void Kinematic::setSpeed(float linear_x, float linear_y, float linear_z, float a
     }
 }
 
-void Kinematic::omniBaseOdom()
+void Kinematic::omnibaseOdom(float heading)
 {
-    float dis_a = m1->getDistance();
-    float dis_b = m2->getDistance();
-    float dis_c = m3->getDistance();
-
-    y = (sqrt3 * dis_a) - (sqrt3 * dis_b);
-    x = -1 * ((2 * dis_c) - dis_a - dis_b);
-    w = (dis_a + dis_b + dis_c) / r_base;
+    float v1 = -(m1->speed_ms);
+    float v2 = -(m3->speed_ms);
+    float v3 = -(m2->speed_ms);
+    float vmx = (2 * v2 - v1 - v3) / 3;
+    float vmy = ((sqrt3 * v3) - (sqrt3 * v1)) / 3;
+    w = heading * PI/180;
+    x += (cos(w) * vmx) - (sin(w) * vmy);
+    y += (sin(w) * vmx) + (cos(w) * vmy);
 }

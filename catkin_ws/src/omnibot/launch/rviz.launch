@@ -7,19 +7,6 @@
   <arg name="urdf_file" default="$(find omnibot)/urdf/robot.xacro" />
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg urdf_file)" />
 
-  <!-- Publish the robot state -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher"
-        type="robot_state_publisher">
-    <param name="publish_frequency" value="10.0"/>
-  </node>
-
-  <!-- Provide simulated control of the robot joint angles -->
-  <node name="joint_state_publisher" pkg="joint_state_publisher"
-        type="joint_state_publisher">
-    <param name="use_gui" value="False" />
-    <param name="rate" value="150.0"/>
-  </node>
-
   <node name="node_autonomous" pkg="omnibot" type="node_autonomous.py" output="screen"/>
   <node name="rviz" pkg="rviz" type="rviz"
         args="-d $(find omnibot)/config/view.rviz" />

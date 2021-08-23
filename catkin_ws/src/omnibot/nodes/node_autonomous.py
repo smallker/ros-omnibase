@@ -69,7 +69,7 @@ class NodeAutonomous:
         self.pid_z.sp = self.arr[self.position][2]
         rospy.init_node('node_autonomous', anonymous=True)
         rospy.Subscriber('odom', Odometry, self.odom_callback)
-        rospy.Subscriber('/sensor/compass', Int32, self.__cmp_callback)
+        # rospy.Subscriber('/sensor/compass', Int32, self.__cmp_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.__setpoint)
         rospy.Subscriber('/reset_pos', Empty, self.__reset)
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)

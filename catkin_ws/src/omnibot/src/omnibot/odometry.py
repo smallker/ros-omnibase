@@ -17,7 +17,8 @@ class Odometry:
         self.m_a: float = 0.0
         self.m_b: float = 0.0
         self.m_c: float = 0.0
-        self.cmp = 0
+        self.compass = 0.0
+        self.rotation = False
 
     def set_time(self, time):
         self.last_time = time
@@ -31,14 +32,14 @@ class Odometry:
         delta_time = new_time - self.last_time
         if delta_time <= 0:
             delta_time = 1
-        x = (2 * self.v2 - self.v1 - self.v3)/3
-        y = (sqrt3 * self.v3 - sqrt3 * self.v1)/3
 
+        # self.pose.theta = self.compass
+        self.pose.x = -1 * (2 * self.v2 - self.v1 - self.v3) / 3
+        self.pose.y = -1 * (sqrt3 * self.v3 - sqrt3 * self.v1) / 3
         # self.pose.theta = ((self.m_a + self.m_c + self.m_b) / (self.base_wheel * 3))
-        self.pose.theta = self.cmp
-        self.pose.x = -1 * (math.cos(self.cmp) * x - math.sin(self.cmp) * y)
-        self.pose.y = -1 * (math.sin(self.cmp) * x + math.cos(self.cmp) * y)
-        # self.pose.theta = ((self.v1 + self.v2 + self.v3) / (self.base_wheel * 3))
+        self.pose.theta = ((self.v1 + self.v2 + self.v3) / (self.base_wheel * 3))
+        # self.pose.x = -1 * (math.cos(self.pose.theta) * x - math.sin(self.pose.theta) * y)
+        # self.pose.y = -1 * (math.sin(self.pose.theta) * x + math.cos(self.pose.theta) * y)
 
         self.pose.xVel = abs((self.pose.x - self.last_pose.x) / delta_time)
         self.pose.yVel = abs((self.pose.y - self.last_pose.y) / delta_time)
@@ -55,5 +56,8 @@ class Odometry:
     def set_pose(self, pose):
         self.pose = pose
 
-    def update_compass(self, cmp):
-        self.cmp = cmp * math.pi / 180
+    def update_compass(self, compass):
+        self.compass = compass * math.pi / 180.0
+
+    def set_movement_mode(self, data):
+        self.rotation = data

@@ -7,7 +7,7 @@ import threading
 import rospy
 
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Empty
+from std_msgs.msg import Empty, Bool
 import sys, select, os
 if os.name == 'nt':
   import msvcrt
@@ -38,8 +38,8 @@ CTRL-C to quit
 moveBindings = {
         'i':(1,0,0,0),
         'o':(1,0,0,-1),
-        'j':(0,0,0,1),
         'l':(0,0,0,-1),
+        'j':(0,0,0,1),
         'u':(1,0,0,1),
         ',':(-1,0,0,0),
         '.':(-1,0,0,1),
@@ -186,7 +186,7 @@ if __name__=="__main__":
     z = 0
     th = 0
     status = 0
-
+    movement_mode = rospy.Publisher('/movement_mode', Bool, queue_size=10)
     try:
         pub_thread.wait_for_subscribers()
         pub_thread.update(x, y, z, th, speed, turn)

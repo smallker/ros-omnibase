@@ -39,6 +39,8 @@ void resetPositionCb(const std_msgs::Empty &msg_data)
   m2.encoder_tick_acc = 0;
   m3.encoder_tick_acc = 0;
   heading = 0;
+  base.x = 0;
+  base.y = 0;
 }
 
 /*
@@ -79,11 +81,7 @@ void initNode(void *parameters)
     if (client.connected() != 1)
     {
       nh.initNode();
-      nh.advertise(heading_pub);
-      nh.advertise(encoder_pub);
-      // nh.advertise(imu_pub);
       nh.subscribe(vel_sub);
-      // nh.subscribe(pid_sub);
       nh.subscribe(rst_pos_sub);
     }
     if (client.connected() == 1)
@@ -103,8 +101,9 @@ void publishMessage(void *parameter)
     if (client.connected() == 1)
     {
       is_ros_ready = true;
-      heading_pub.publish(&heading_data);
-      encoder_pub.publish(&encoder_data);
+      odom_pub.publish(&odom_data);
+      // heading_pub.publish(&heading_data);
+      // encoder_pub.publish(&encoder_data);
     }
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
@@ -184,13 +183,16 @@ void moveBase(void *parameters)
 */
 void countRpm(void *parameters)
 {
-  const int sampling_time_ms = 20;
+  const int sampling_time_ms = 5;
   for (;;)
   {
     m1.calculateRpm(sampling_time_ms);
     m2.calculateRpm(sampling_time_ms);
     m3.calculateRpm(sampling_time_ms);
-    // Serial.printf("m1 : %d m2 : %d m3 : %d\n", m1.rpm, m2.rpm, m3.rpm);
+    base.omnibaseOdom(heading);
+    Serial.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
+    // Serial.printf("m1 : %.3f m2 : %.3f m3 : %.3f\n", m1.speed_ms, m2.speed_ms, m3.speed_ms);
+    // vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
     vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
   }
 }
@@ -202,13 +204,20 @@ void countRpm(void *parameters)
 */
 void odometry(void *parameters)
 {
-
+  char base_link[] = "/base_link";
+  char odom[] = "/odom";
+  odom_data.child_frame_id = base_link;
+  odom_data.header.frame_id = odom;
   for (;;)
   {
-    encoder_data.en_a = m1.encoder_tick_acc;
-    encoder_data.en_b = m2.encoder_tick_acc;
-    encoder_data.en_c = m3.encoder_tick_acc;
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    odom_data.header.stamp = nh.now();
+    odom_data.pose.pose.position.x = base.x;
+    odom_data.pose.pose.position.y = base.y;
+    odom_data.pose.pose.orientation.w = base.w;
+    // encoder_data.en_a = m1.encoder_tick_acc;
+    // encoder_data.en_b = m2.encoder_tick_acc;
+    // encoder_data.en_c = m3.encoder_tick_acc;
+    vTaskDelay(5 / portTICK_PERIOD_MS);
   }
 }
 

@@ -9,7 +9,8 @@
         "fstream": "cpp",
         "istream": "cpp",
         "ostream": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "cmath": "cpp"
     },
     "python.analysis.extraPaths": [
         "C:\\opt\\ros\\noetic\\x64\\lib/site-packages",
