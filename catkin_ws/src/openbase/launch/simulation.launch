@@ -24,6 +24,7 @@
       wheel_base: $(arg wheel_base)
     </rosparam>
   </node>
+  <node name="node_autonomous" pkg="openbase" type="node_autonomous.py" output="screen"/>
   <node name="teleop" pkg="openbase" type="node_teleop.py" output="screen"/>
 
 </launch>

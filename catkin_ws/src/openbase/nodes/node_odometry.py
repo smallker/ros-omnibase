@@ -13,7 +13,7 @@ class OdometryNode:
         rospy.init_node('node_odometry')
         self.odom_pub = rospy.Publisher('odom', Odometry, queue_size=10)
         self.tf_pub = TransformBroadcaster()
-        self.rate = float(rospy.get_param('~rate', 50))
+        self.rate = float(rospy.get_param('~rate', 20))
         self.baseFrameID = rospy.get_param('~base_frame_id', 'base_link')
         self.odomFrameID = rospy.get_param('~odom_frame_id', 'odom')
         rospy.Subscriber('/pose_data', Pose2D, self.on_pose_data)

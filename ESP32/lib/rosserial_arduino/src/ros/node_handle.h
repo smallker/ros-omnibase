@@ -66,7 +66,7 @@
 #define MODE_MSG_CHECKSUM   8   // checksum for msg and topic id
 
 
-#define MSG_TIMEOUT 150  //20 milliseconds to recieve all of message data
+#define MSG_TIMEOUT 50  //20 milliseconds to recieve all of message data
 
 #include "msg.h"
 
@@ -94,7 +94,7 @@ namespace ros {
            int MAX_SUBSCRIBERS=15,
            int MAX_PUBLISHERS=15,
            int INPUT_SIZE=512,
-           int OUTPUT_SIZE=1024>
+           int OUTPUT_SIZE=3000>
   class NodeHandle_ : public NodeHandleBase_
   {
     protected:

@@ -18,8 +18,8 @@ class RobotMockNode:
                 vmx = (2 * v2 - v1 - v3) / 3 # Sampling kecepatan x
                 vmy = ((math.sqrt(3) * v3) - (math.sqrt(3) * v1)) / 3 # Sampling kecepatan y
                 w += ((v1 + v2+ v3) / (self.base_wheel * 3)) / (1 / self.sampling_time) # Dalam radian
-                self.pose.x += ((math.cos(w) * vmx) - (math.sin(w) * vmy)) / (1 / self.sampling_time)# x (meter)
-                self.pose.y += ((math.sin(w) * vmx) + (math.cos(w) * vmy)) / (1 / self.sampling_time)# y (meter)
+                self.pose.x -= ((math.cos(w) * vmx) - (math.sin(w) * vmy)) / (1 / self.sampling_time)# x (meter)
+                self.pose.y -= ((math.sin(w) * vmx) + (math.cos(w) * vmy)) / (1 / self.sampling_time)# y (meter)
                 self.pose.theta = w
                 self.pose_publisher.publish(self.pose)
             rospy.sleep(self.sampling_time)

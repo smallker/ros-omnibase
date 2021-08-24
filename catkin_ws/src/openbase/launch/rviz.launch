@@ -7,7 +7,7 @@
   <arg name="urdf_file" default="$(find openbase)/urdf/robot.xacro" />
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg urdf_file)" />
 
-  <node name="node_autonomous" pkg="openbase" type="node_autonomous.py" output="screen"/>
+  
   <node name="rviz" pkg="rviz" type="rviz"
         args="-d $(find openbase)/config/view.rviz" />
 

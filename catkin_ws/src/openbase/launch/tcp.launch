@@ -12,5 +12,6 @@
     <param name="port" value="tcp"/>
   </node>
   <node name="teleop" pkg="openbase" type="node_teleop.py" output="screen"/>
+  <node name="node_autonomous" pkg="openbase" type="node_autonomous.py" output="screen"/>
 
 </launch>

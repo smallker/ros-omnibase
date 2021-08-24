@@ -85,8 +85,10 @@ void initNode(void *parameters)
       nh.subscribe(rst_pos_sub);
       nh.advertise(pose_pub);
     }
-    if (client.connected() == 1)
+    if (client.connected() == 1){
       nh.spinOnce();
+    }
+    vTaskDelay(PUBLISH_DELAY_MS/portTICK_PERIOD_MS);
   }
 }
 
