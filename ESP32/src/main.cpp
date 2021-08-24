@@ -83,6 +83,7 @@ void initNode(void *parameters)
       nh.initNode();
       nh.subscribe(vel_sub);
       nh.subscribe(rst_pos_sub);
+      nh.advertise(pose_pub);
     }
     if (client.connected() == 1)
       nh.spinOnce();
@@ -101,9 +102,7 @@ void publishMessage(void *parameter)
     if (client.connected() == 1)
     {
       is_ros_ready = true;
-      odom_pub.publish(&odom_data);
-      // heading_pub.publish(&heading_data);
-      // encoder_pub.publish(&encoder_data);
+      pose_pub.publish(&pose_data);
     }
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
@@ -204,20 +203,12 @@ void countRpm(void *parameters)
 */
 void odometry(void *parameters)
 {
-  char base_link[] = "/base_link";
-  char odom[] = "/odom";
-  odom_data.child_frame_id = base_link;
-  odom_data.header.frame_id = odom;
   for (;;)
   {
-    odom_data.header.stamp = nh.now();
-    odom_data.pose.pose.position.x = base.x;
-    odom_data.pose.pose.position.y = base.y;
-    odom_data.pose.pose.orientation.w = base.w;
-    // encoder_data.en_a = m1.encoder_tick_acc;
-    // encoder_data.en_b = m2.encoder_tick_acc;
-    // encoder_data.en_c = m3.encoder_tick_acc;
-    vTaskDelay(5 / portTICK_PERIOD_MS);
+    pose_data.x = base.x;
+    pose_data.y = base.y;
+    pose_data.theta = base.w;
+    vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
 }
 

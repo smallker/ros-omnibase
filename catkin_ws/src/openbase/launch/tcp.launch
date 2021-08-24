@@ -7,15 +7,7 @@
   <arg name="urdf_file" default="$(find openbase)/urdf/robot.xacro" />
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg urdf_file)" />
 
-  <!-- <node name="node_odometry" pkg="openbase" type="node_odometry.py" output="screen">
-    <rosparam subst_value="true">
-      ticks_per_meter: $(arg ticks_per_meter)
-      wheel_separation: $(arg wheel_separation)
-      d_wheel: $(arg d_wheel)
-      ppr: $(arg ppr)
-      wheel_base: $(arg wheel_base)
-    </rosparam>
-  </node> -->
+  <node name="node_odometry" pkg="openbase" type="node_odometry.py" output="screen"/>
   <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
     <param name="port" value="tcp"/>
   </node>

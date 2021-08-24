@@ -1,43 +1,33 @@
 #! /usr/bin/python3
 import math
 import rospy
-from std_msgs.msg import Int32
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Pose2D
 from threading import Thread
 from openbase.kinematics import Kinematics
-from openbase.msg import MotorSpeed, MotorEncoder
 
 class RobotMockNode:
-
-    m_speed:MotorSpeed = MotorSpeed()
-    m_enc:MotorEncoder = MotorEncoder()
+    pose:Pose2D = Pose2D()
     twist_msg:Twist = None
-    cmp:Int32 = Int32()
-    def __init__(self) -> None:
-        self.cmp.data = 0
-        pass
-    
+    sampling_time = 0.1
     def __encoder(self):
         move = Kinematics()
+        w = 0.00
         while(True):
             if(self.twist_msg is not None):
-                self.m_speed = move.set_speed(self.twist_msg)
-                self.m_enc.en_a += int((self.m_speed.a/2 * math.pi) * self.ppr / 10)
-                self.m_enc.en_b += int((self.m_speed.b/2 * math.pi) * self.ppr / 10)
-                self.m_enc.en_c += int((self.m_speed.c/2 * math.pi) * self.ppr / 10)
-                self.cmp.data = int((-math.pi/180)*((self.m_enc.en_a + self.m_enc.en_b + self.m_enc.en_c) / (self.base_wheel * 3)))
-            rospy.sleep(0.1)
+                v1, v2, v3 = move.set_speed(self.twist_msg)
+                vmx = (2 * v2 - v1 - v3) / 3 # Sampling kecepatan x
+                vmy = ((math.sqrt(3) * v3) - (math.sqrt(3) * v1)) / 3 # Sampling kecepatan y
+                w += ((v1 + v2+ v3) / (self.base_wheel * 3)) # Dalam radian
+                self.pose.x += ((math.cos(w) * vmx) - (math.sin(w) * vmy)) / (1 / self.sampling_time)# x (meter)
+                self.pose.y += ((math.sin(w) * vmx) - (math.cos(w) * vmy)) / (1 / self.sampling_time)# y (meter)
+                self.pose.theta = w
+                self.pose_publisher.publish(self.pose)
+            rospy.sleep(self.sampling_time)
 
     def publish_encoder(self):
-        pub_speed = rospy.Publisher('motor_speed', MotorSpeed, queue_size=1)
-        pub_encoder = rospy.Publisher('motor_encoder', MotorEncoder, queue_size=1)
-        pub_cmp = rospy.Publisher('/sensor/compass', Int32, queue_size=1)
         while(True):
             try:
                 rospy.sleep(0.1)
-                pub_speed.publish(self.m_speed)
-                pub_encoder.publish(self.m_enc)
-                pub_cmp.publish(self.cmp)
             except Exception as e:
                 pass
 
@@ -51,9 +41,10 @@ class RobotMockNode:
 
     def listen(self):
         rospy.init_node('mock_robot', anonymous=True)
-        rospy.loginfo('start mock robot')
+        rospy.loginfo('ROBOT SIMULATION STARTED')
         self.read_param()
         rospy.Subscriber('/cmd_vel', Twist, callback=self.callback)
+        self.pose_publisher = rospy.Publisher('/pose_data', Pose2D, queue_size=10)
         Thread(target=self.__encoder, args=(), daemon=True).start()
         Thread(target=self.publish_encoder, args=(), daemon=True).start()
         rospy.spin()
