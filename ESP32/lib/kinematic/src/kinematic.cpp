@@ -29,9 +29,9 @@ void Kinematic::setSpeed(float linear_x, float linear_y, float linear_z, float a
 
 void Kinematic::omnibaseOdom(float heading)
 {
-    float v1 = -(m1->speed_ms);
-    float v2 = -(m2->speed_ms);
-    float v3 = -(m3->speed_ms);
+    float v1 = (m1->speed_ms);
+    float v2 = (m2->speed_ms);
+    float v3 = (m3->speed_ms);
     float vmx = (2 * v2 - v1 - v3) / 3;
     float vmy = ((sqrt3 * v3) - (sqrt3 * v1)) / 3;
     w = heading * PI / 180;

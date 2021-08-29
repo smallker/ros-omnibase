@@ -194,8 +194,8 @@ void Motor::brake()
 */
 void Motor::isrHandler()
 {
-    digitalRead(en_b) == LOW ? encoder_tick++ : encoder_tick--;
-    digitalRead(en_b) == LOW ? encoder_tick_acc++ : encoder_tick_acc--;
+    digitalRead(en_b) == LOW ? encoder_tick-- : encoder_tick++;
+    digitalRead(en_b) == LOW ? encoder_tick_acc-- : encoder_tick_acc++;
 }
 
 /*
