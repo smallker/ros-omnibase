@@ -6,12 +6,22 @@
   <arg name="wheel_base" value="0.11"/>
   <arg name="urdf_file" default="$(find openbase)/urdf/robot.xacro" />
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg urdf_file)" />
-
-  <node name="node_odometry" pkg="openbase" type="node_odometry.py" output="screen"/>
+  <arg name="base_frame_id" value="real"/>
+  <arg name="odom_frame_id" default="odom"/>
+  <node name="$(anon node_odometry)" pkg="openbase" type="node_odometry.py" output="screen">
+    <rosparam subst_value="true">
+      base_frame_id: $(arg base_frame_id)
+      odom_frame_id: $(arg odom_frame_id)
+    </rosparam>
+  </node>
   <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
     <param name="port" value="tcp"/>
   </node>
+  <node name="$(anon node_autonomous)" pkg="openbase" type="node_autonomous.py" output="screen">
+    <rosparam subst_value="true">
+      base_frame_id: $(arg base_frame_id)
+      odom_frame_id: $(arg odom_frame_id)
+    </rosparam>
+  </node>
   <node name="teleop" pkg="openbase" type="node_teleop.py" output="screen"/>
-  <node name="node_autonomous" pkg="openbase" type="node_autonomous.py" output="screen"/>
-
 </launch>

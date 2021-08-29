@@ -20,7 +20,7 @@ class NodeAutonomous:
     start_timestamp = 0
     euler_deg = 0
     last_euler_deg = 0
-    def odom_callback(self, msg_data: Odometry):
+    def on_odometry(self, msg_data: Odometry):
         (roll, pitch, yaw) = euler_from_quaternion([
             msg_data.pose.pose.orientation.x,
             msg_data.pose.pose.orientation.y,
@@ -101,16 +101,14 @@ class NodeAutonomous:
         self.start_timestamp = int(time() * 1000)
         self.finish = False
 
-    def __cmp_callback(self, msg:Int32):
-        self.pid_w.pos = msg.data * pi / 180
-
     def __init__(self) -> None:
         self.arr = [[0, 0, 0]]
         self.pid_x.sp = self.arr[self.position][0]
         self.pid_y.sp = self.arr[self.position][1]
         self.pid_w.sp = self.arr[self.position][2]
         rospy.init_node('node_autonomous', anonymous=True)
-        rospy.Subscriber('/odom', Odometry, self.odom_callback)
+        self.base_frame_id = rospy.get_param('~base_frame_id')
+        rospy.Subscriber(f'/{self.base_frame_id}/odom', Odometry, self.on_odometry)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.__setpoint)
         rospy.Subscriber('/reset_pos', Empty, self.__reset)
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
