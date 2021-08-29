@@ -15,15 +15,15 @@ void Kinematic::setSpeed(float linear_x, float linear_y, float linear_z, float a
 {
     if (mode == OMNIBASE_Y)
     {
-        float a = (0.58 * linear_x) + (-0.33 * linear_y) + (0.33 * angular_z);
-        float b = (0 * linear_x) + (0.67 * linear_y) + (0.33 * angular_z);
-        float c = (-0.58 * linear_x) + (-0.33 * linear_y) + (0.33 * angular_z);
-        float sp_a = (a / (PI * d_wheel)) * 60;
-        float sp_b = (b / (PI * d_wheel)) * 60;
-        float sp_c = (c / (PI * d_wheel)) * 60;
-        m1->speed(sp_a);
-        m2->speed(sp_b);
-        m3->speed(sp_c);
+        float inv_m1 = (0.58 * linear_x) + (-0.33 * linear_y) + (0.33 * angular_z);
+        float inv_m2 = (0 * linear_x) + (0.67 * linear_y) + (0.33 * angular_z);
+        float inv_m3 = (-0.58 * linear_x) + (-0.33 * linear_y) + (0.33 * angular_z);
+        float sp_m1 = (inv_m1 / (PI * d_wheel)) * 60;
+        float sp_m2 = (inv_m2 / (PI * d_wheel)) * 60;
+        float sp_m3 = (inv_m3 / (PI * d_wheel)) * 60;
+        m1->speed(sp_m1);
+        m2->speed(sp_m2);
+        m3->speed(sp_m3);
     }
 }
 
