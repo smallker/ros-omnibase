@@ -48,7 +48,7 @@ void resetPositionCb(const std_msgs::Empty &msg_data)
   belum tersambung dan berkedip setiap 2s
   ketika robot tersambung ke ROS
 */
-void blinker(void *parameters)
+void blink(void *parameters)
 {
   pinMode(LED_BUILTIN, OUTPUT);
   for (;;)
@@ -233,7 +233,7 @@ void setup()
   // sem_i2c = xSemaphoreCreateMutex();
 
   xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);   // Pengaturan akses poin
-  xTaskCreatePinnedToCore(blinker, "blink", 1000, NULL, 1, &blink, 1);               // Test apakah RTOS dapat berjalan
+  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 1, &blink_task, 1);               // Test apakah RTOS dapat berjalan
   xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);            // Inisialisasi ros node
   xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1); // Task publish ros messsage
   xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);     // Membaca sensor kompas

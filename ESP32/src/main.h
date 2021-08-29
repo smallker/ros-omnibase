@@ -31,7 +31,7 @@ portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 // Task handle untuk RTOS
 TaskHandle_t wifi_task;
-TaskHandle_t blink;
+TaskHandle_t blink_task;
 TaskHandle_t ros_task;
 TaskHandle_t ros_pub;
 TaskHandle_t cmp_task;
@@ -42,7 +42,7 @@ TaskHandle_t imu_task;
 
 // Task RTOS
 
-void blinker(void *parameters);
+void blink(void *parameters);
 void initNode(void *parameters);
 void publishMessage(void *parameter);
 void readCompass(void *parameters);
