@@ -50,7 +50,7 @@ geometry_msgs::Pose2D pose_data;
 ros::NodeHandle_<WiFiHardware> nh;
 
 // Inisialisasi ros publisher
-ros::Publisher pose_pub("/pose_data", &pose_data);
+ros::Publisher pose_pub("/real/pose_data", &pose_data);
 
 // Inisialisasi fungsi callback subscriber
 void velCb(const geometry_msgs::Twist &msg_data);
