@@ -169,7 +169,7 @@ void moveBase(void *parameters)
       float z = vel_data.linear.z;
       float ax = vel_data.angular.x;
       float ay = vel_data.angular.y;
-      float az = vel_data.angular.z;
+      float az = -1 * vel_data.angular.z;
       base.setSpeed(x, y, z, ax, ay, az);
     }
     else

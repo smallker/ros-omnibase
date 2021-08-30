@@ -14,9 +14,7 @@
       odom_frame_id: $(arg odom_frame_id)
     </rosparam>
   </node>
-  <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
-    <param name="port" value="tcp"/>
-  </node>
+  <node pkg="rosserial_server" type="socket_node" name="rosserial_server"/>
   <node name="$(anon node_autonomous)" pkg="openbase" type="node_autonomous.py" output="screen">
     <rosparam subst_value="true">
       base_frame_id: $(arg base_frame_id)
