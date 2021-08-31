@@ -20,20 +20,20 @@ void ICACHE_RAM_ATTR EN3_ISR()
   portEXIT_CRITICAL(&mux);
 }
 
-void setPidCb(const geometry_msgs::Point &msg_data)
+void onSetMotorPid(const geometry_msgs::Point &msg_data)
 {
   m3.pid(msg_data.x, msg_data.y, msg_data.z, 1000);
   Serial.println(msg_data.x);
 }
 
-void velCb(const geometry_msgs::Twist &msg_data)
+void onCmdVel(const geometry_msgs::Twist &msg_data)
 {
   vel_data = msg_data;
   sp_heading = heading;
   last_command_time = millis();
 }
 
-void resetPositionCb(const std_msgs::Empty &msg_data)
+void onResetPose(const std_msgs::Empty &msg_data)
 {
   m1.encoder_tick_acc = 0;
   m2.encoder_tick_acc = 0;
@@ -41,8 +41,17 @@ void resetPositionCb(const std_msgs::Empty &msg_data)
   heading = 0;
   base.x = 0;
   base.y = 0;
+  goal_x = 0;
+  goal_y = 0;
+  pose_control_begin = false;
 }
 
+void onMoveBaseToGoal(const geometry_msgs::PoseStamped &msg_data)
+{
+  goal_x = msg_data.pose.position.x;
+  goal_y = msg_data.pose.position.y;
+  pose_control_begin = true;
+}
 /*
   LED akan berkedip setiap 300ms saat robot
   belum tersambung dan berkedip setiap 2s
@@ -83,12 +92,14 @@ void initNode(void *parameters)
       nh.initNode();
       nh.subscribe(vel_sub);
       nh.subscribe(rst_pos_sub);
+      nh.subscribe(goal_sub);
       nh.advertise(pose_pub);
     }
-    if (client.connected() == 1){
+    if (client.connected() == 1)
+    {
       nh.spinOnce();
     }
-    vTaskDelay(PUBLISH_DELAY_MS/portTICK_PERIOD_MS);
+    vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
 }
 
@@ -162,18 +173,20 @@ void moveBase(void *parameters)
 {
   for (;;)
   {
+    analogWriteFrequency(10000);
+    m1.pid(7, 0.05, 1, 255);
+    m2.pid(7, 0.05, 1, 255);
+    m3.pid(6, 0.05, 1, 255);
+    base.setMotor(m1, m2, m3);
     if (WiFi.softAPgetStationNum() > 0 && (millis() - last_command_time < 500))
     {
-      float x = vel_data.linear.x;
-      float y = vel_data.linear.y;
-      float z = vel_data.linear.z;
-      float ax = vel_data.angular.x;
-      float ay = vel_data.angular.y;
-      float az = -1 * vel_data.angular.z;
-      base.setSpeed(x, y, z, ax, ay, az);
+      float lin_x = vel_data.linear.y;
+      float lin_y = vel_data.linear.x;
+      float ang_z = -1 * vel_data.angular.z;
+      base.setSpeed(lin_x, lin_y, ang_z);
     }
     else
-      base.setSpeed(0, 0, 0, 0, 0, 0);
+      base.setSpeed(0, 0, 0);
     vTaskDelay(10);
   }
 }
@@ -191,7 +204,7 @@ void countRpm(void *parameters)
     m2.calculateRpm(sampling_time_ms);
     m3.calculateRpm(sampling_time_ms);
     base.omnibaseOdom(heading);
-    Serial.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
+    // Serial.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
     // Serial.printf("m1 : %.3f m2 : %.3f m3 : %.3f\n", m1.speed_ms, m2.speed_ms, m3.speed_ms);
     // vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
     vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
@@ -214,14 +227,29 @@ void odometry(void *parameters)
   }
 }
 
+void poseControl(void *parameters)
+{
+  Pid pid_x = Pid(0.5, 0, 0);
+  Pid pid_y = Pid(0.5, 0, 0);
+  Pid pid_w = Pid(0.1, 0, 0);
+  for (;;)
+  {
+    if (pose_control_begin)
+    {
+      pid_x.setpoint = goal_x;
+      pid_y.setpoint = goal_y;
+      pid_w.setpoint = 0;
+      float lin_x = pid_x.compute(base.x);
+      float lin_y = pid_y.compute(base.y);
+      float ang_z = pid_w.compute(base.w);
+      base.setSpeed(- lin_x, lin_y, - ang_z);
+    }
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
-  analogWriteFrequency(10000);
-  m1.pid(7, 0.05, 1, 255);
-  m2.pid(7, 0.05, 1, 255);
-  m3.pid(6, 0.05, 1, 255);
-  base.setMotor(m1, m2, m3);
   attachInterrupt(digitalPinToInterrupt(m1.en_a), EN1_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m2.en_a), EN2_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
@@ -231,15 +259,15 @@ void setup()
   // Sebisa mungkin prioritas task disamakan untuk menghindari crash
   // Task yang paling sering dijalankan diberikan prioritas paling tinggi
   // sem_i2c = xSemaphoreCreateMutex();
-
   xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);   // Pengaturan akses poin
-  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 1, &blink_task, 1);               // Test apakah RTOS dapat berjalan
+  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 1, &blink_task, 1);            // Test apakah RTOS dapat berjalan
   xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);            // Inisialisasi ros node
   xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1); // Task publish ros messsage
   xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);     // Membaca sensor kompas
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);          // Menggerakkan base robot
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);             // Menghitung RPM
   xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);   // Set data untuk message MotorEncoder
+  xTaskCreatePinnedToCore(poseControl, "pose control", 10000, NULL, 2, &pose_control_task, 1);   // Set data untuk message MotorEncoder
 }
 void loop()
 {

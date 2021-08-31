@@ -1,8 +1,8 @@
 #include "kinematic.h"
 
-Kinematic::Kinematic(byte mode)
+Kinematic::Kinematic(Base base)
 {
-    this->mode = mode;
+    this->base = base;
 }
 void Kinematic::setMotor(Motor &m1, Motor &m2, Motor &m3)
 {
@@ -13,11 +13,27 @@ void Kinematic::setMotor(Motor &m1, Motor &m2, Motor &m3)
 
 void Kinematic::setSpeed(float linear_x, float linear_y, float linear_z, float angular_x, float angular_y, float angular_z)
 {
-    if (mode == OMNIBASE_Y)
+    if (base == BASE_OMNI_Y)
     {
         float inv_m1 = (0.58 * linear_x) + (-0.33 * linear_y) + (0.33 * angular_z);
         float inv_m2 = (0 * linear_x) + (0.67 * linear_y) + (0.33 * angular_z);
         float inv_m3 = (-0.58 * linear_x) + (-0.33 * linear_y) + (0.33 * angular_z);
+        float sp_m1 = (inv_m1 / (PI * d_wheel)) * 60;
+        float sp_m2 = (inv_m2 / (PI * d_wheel)) * 60;
+        float sp_m3 = (inv_m3 / (PI * d_wheel)) * 60;
+        m1->speed(sp_m1);
+        m2->speed(sp_m2);
+        m3->speed(sp_m3);
+    }
+}
+
+void Kinematic::setSpeed(float linear_x, float linear_y, float angular_z)
+{
+    if (base == BASE_OMNI_Y)
+    {
+        float inv_m1 = (0.58 * linear_y) + (-0.33 * linear_x) + (0.33 * angular_z);
+        float inv_m2 = (0 * linear_y) + (0.67 * linear_x) + (0.33 * angular_z);
+        float inv_m3 = (-0.58 * linear_y) + (-0.33 * linear_x) + (0.33 * angular_z);
         float sp_m1 = (inv_m1 / (PI * d_wheel)) * 60;
         float sp_m2 = (inv_m2 / (PI * d_wheel)) * 60;
         float sp_m3 = (inv_m3 / (PI * d_wheel)) * 60;

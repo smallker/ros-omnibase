@@ -3,6 +3,7 @@
 #include <FreeRTOS.h>
 #include <QMC5883LCompass.h>
 #include <kinematic.h>
+#include <pid.h>
 #include "wifi_setup.h"
 #include "ros_setup.h"
 // Map input/output ke nama yg mudah diingat
@@ -39,7 +40,7 @@ TaskHandle_t motor_task;
 TaskHandle_t rpm_task;
 TaskHandle_t odometry_task;
 TaskHandle_t imu_task;
-
+TaskHandle_t pose_control_task;
 // Task RTOS
 
 void blink(void *parameters);
@@ -49,17 +50,19 @@ void readCompass(void *parameters);
 void moveBase(void *parameters);
 void countRpm(void *parameters);
 void odometry(void *parameters);
-
+void poseControl(void *parameters);
 // primitive global variable
 volatile int heading;
 volatile int sp_heading;
 volatile int last_compass_reading;
 volatile bool is_ros_ready;
 volatile unsigned long last_command_time;
+volatile float goal_x, goal_y, goal_th;
+volatile bool pose_control_begin;
 // inisialisasi objek motor
 Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B);
 Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B);
 Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
 
 // inisialisasi objek kinematik
-Kinematic base(OMNIBASE_Y);
+Kinematic base(BASE_OMNI_Y);

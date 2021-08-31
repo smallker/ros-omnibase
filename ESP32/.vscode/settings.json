@@ -10,7 +10,20 @@
         "istream": "cpp",
         "ostream": "cpp",
         "sstream": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "exception": "cpp",
+        "iomanip": "cpp",
+        "ios": "cpp",
+        "limits": "cpp",
+        "streambuf": "cpp",
+        "type_traits": "cpp",
+        "tuple": "cpp",
+        "random": "cpp"
     },
     "python.analysis.extraPaths": [
         "C:\\opt\\ros\\noetic\\x64\\lib/site-packages",

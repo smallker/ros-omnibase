@@ -6,6 +6,7 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <sensor_msgs/Imu.h>
 #define PUBLISH_DELAY_MS 50
 
@@ -53,12 +54,12 @@ ros::NodeHandle_<WiFiHardware> nh;
 ros::Publisher pose_pub("/real/pose_data", &pose_data);
 
 // Inisialisasi fungsi callback subscriber
-void velCb(const geometry_msgs::Twist &msg_data);
-void setPidCb(const geometry_msgs::Point &msg_data);
-void zeroHeadingCb(const std_msgs::Empty &msg_data);
-void resetPositionCb(const std_msgs::Empty &mgs_data);
-
+void onCmdVel(const geometry_msgs::Twist &msg_data);
+void onSetMotorPid(const geometry_msgs::Point &msg_data);
+void onMoveBaseToGoal(const geometry_msgs::PoseStamped &msg_data);
+void onResetPose(const std_msgs::Empty &mgs_data);
 // Inisialisasi ros subscriber
-ros::Subscriber<geometry_msgs::Twist> vel_sub("/cmd_vel", velCb);
-ros::Subscriber<geometry_msgs::Point> pid_sub("/pid", setPidCb);
-ros::Subscriber<std_msgs::Empty> rst_pos_sub("/reset_pos", resetPositionCb);
+ros::Subscriber<geometry_msgs::Twist> vel_sub("/cmd_vel", onCmdVel);
+ros::Subscriber<geometry_msgs::Point> pid_sub("/pid", onSetMotorPid);
+ros::Subscriber<geometry_msgs::PoseStamped> goal_sub("/move_base_simple/goal", onMoveBaseToGoal);
+ros::Subscriber<std_msgs::Empty> rst_pos_sub("/reset_pos", onResetPose);
