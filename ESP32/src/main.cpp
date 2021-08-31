@@ -227,6 +227,12 @@ void odometry(void *parameters)
   }
 }
 
+/*
+  Kendali PID posisi robot
+  dengan umpan balik
+  posisi robot saat ini
+
+*/
 void poseControl(void *parameters)
 {
   Pid pid_x = Pid(0.5, 0, 0);
