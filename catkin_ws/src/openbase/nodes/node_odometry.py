@@ -45,7 +45,7 @@ class OdometryNode:
         odom.pose.pose.orientation.w = q[3]
         self.odom_pub.publish(odom)
         self.seq += 1
-        # rospy.loginfo(f'{pose.x},{pose.y},{pose.theta}')
+        rospy.loginfo(f'{pose.x},{pose.y},{pose.theta}')
 if __name__ == '__main__':
     try:
         rospy.loginfo('running node odom')

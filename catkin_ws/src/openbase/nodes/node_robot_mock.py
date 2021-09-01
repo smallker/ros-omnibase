@@ -2,14 +2,14 @@
 import math
 import rospy
 from std_msgs.msg import Empty
-from geometry_msgs.msg import Twist, Pose2D
+from geometry_msgs.msg import Twist, Pose2D, PoseStamped
 from threading import Thread
 from openbase.kinematics import Kinematics
 
 class RobotMockNode:
     pose:Pose2D = Pose2D()
     twist_msg:Twist = None
-    sampling_time = 0.1
+    sampling_time = 0.07
     def __encoder(self):
         move = Kinematics()
         while(True):
@@ -21,6 +21,12 @@ class RobotMockNode:
                 self.pose.x -= ((math.cos(self.pose.theta) * vmx) - (math.sin(self.pose.theta) * vmy)) / (1 / self.sampling_time)# x (meter)
                 self.pose.y -= ((math.sin(self.pose.theta) * vmx) + (math.cos(self.pose.theta) * vmy)) / (1 / self.sampling_time)# y (meter)
                 self.pose_publisher.publish(self.pose)
+
+                goal = PoseStamped()
+                goal.pose.position.x = self.pose.x
+                goal.pose.position.y = self.pose.y
+                self.goal_publisher.publish(goal)
+
             rospy.sleep(self.sampling_time)
 
     def publish_encoder(self):
@@ -51,6 +57,7 @@ class RobotMockNode:
         rospy.Subscriber('/cmd_vel', Twist, callback=self.on_twist)
         rospy.Subscriber('/reset_pos', Empty, callback=self.on_reset_pos)
         self.pose_publisher = rospy.Publisher(f'/{self.base_frame_id}/pose_data', Pose2D, queue_size=10)
+        self.goal_publisher = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
         Thread(target=self.__encoder, args=(), daemon=True).start()
         Thread(target=self.publish_encoder, args=(), daemon=True).start()
         rospy.spin()

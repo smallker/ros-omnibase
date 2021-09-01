@@ -22,3 +22,9 @@ void Pid::reset(){
     last_err = 0;
     setpoint = 0;
 }
+
+void Pid::setPid(float kp, float ki, float kd){
+    this->kp = kp;
+    this->ki = ki;
+    this->kd = kd;
+}

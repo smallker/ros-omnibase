@@ -27,13 +27,13 @@ void Kinematic::setSpeed(float linear_x, float linear_y, float linear_z, float a
     }
 }
 
-void Kinematic::setSpeed(float linear_x, float linear_y, float angular_z)
+void Kinematic::setSpeed(float lin_x, float lin_y, float ang_z)
 {
     if (base == BASE_OMNI_Y)
     {
-        float inv_m1 = (0.58 * linear_y) + (-0.33 * linear_x) + (0.33 * angular_z);
-        float inv_m2 = (0 * linear_y) + (0.67 * linear_x) + (0.33 * angular_z);
-        float inv_m3 = (-0.58 * linear_y) + (-0.33 * linear_x) + (0.33 * angular_z);
+        float inv_m1 = (0.58 * lin_y) + (-0.33 * lin_x) + (0.33 * ang_z);
+        float inv_m2 = (0 * lin_y) + (0.67 * lin_x) + (0.33 * ang_z);
+        float inv_m3 = (-0.58 * lin_y) + (-0.33 * lin_x) + (0.33 * ang_z);
         float sp_m1 = (inv_m1 / (PI * d_wheel)) * 60;
         float sp_m2 = (inv_m2 / (PI * d_wheel)) * 60;
         float sp_m3 = (inv_m3 / (PI * d_wheel)) * 60;

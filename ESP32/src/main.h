@@ -8,23 +8,23 @@
 #include "ros_setup.h"
 // Map input/output ke nama yg mudah diingat
 // kode M untuk pin motor
-#define M1_A    16
-#define M1_B    4
-#define M1_PWM  17
-#define M2_A    18
-#define M2_B    5
-#define M2_PWM  19
-#define M3_A    33
-#define M3_B    32
-#define M3_PWM  25
+#define M1_A 16
+#define M1_B 4
+#define M1_PWM 17
+#define M2_A 18
+#define M2_B 5
+#define M2_PWM 19
+#define M3_A 33
+#define M3_B 32
+#define M3_PWM 25
 
 // kode EN untuk pin encoder
-#define EN1_A   26
-#define EN1_B   35
-#define EN2_A   27
-#define EN2_B   34
-#define EN3_A   13
-#define EN3_B   39
+#define EN1_A 26
+#define EN1_B 35
+#define EN2_A 27
+#define EN2_B 34
+#define EN3_A 13
+#define EN3_B 39
 
 // Digunakan mematikan interrupt termasuk RTOS
 // saat eksternal interrupt aktif
@@ -51,14 +51,13 @@ void moveBase(void *parameters);
 void countRpm(void *parameters);
 void odometry(void *parameters);
 void poseControl(void *parameters);
+
 // primitive global variable
 volatile int heading;
 volatile int sp_heading;
 volatile int last_compass_reading;
-volatile bool is_ros_ready;
+volatile bool is_ros_ready, pose_control_begin;
 volatile unsigned long last_command_time;
-volatile float goal_x, goal_y, goal_th;
-volatile bool pose_control_begin;
 // inisialisasi objek motor
 Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B);
 Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B);
@@ -66,3 +65,7 @@ Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
 
 // inisialisasi objek kinematik
 Kinematic base(BASE_OMNI_Y);
+
+Pid goal_x = Pid(4, 0, 1);
+Pid goal_y = Pid(5, 0, 1);
+Pid goal_w = Pid(3.5, 0, 1);

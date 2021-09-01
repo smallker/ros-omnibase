@@ -41,7 +41,7 @@ Toolbars:
 Visualization Manager:
   Class: ""
   Displays:
-    - Alpha: 0.30000001192092896
+    - Alpha: 1
       Cell Size: 0.30000001192092896
       Class: rviz/Grid
       Color: 160; 160; 164
@@ -120,7 +120,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 141.6927490234375
+      Scale: 100.30917358398438
       Target Frame: <Fixed Frame>
       X: 0.308801531791687
       Y: 0.07403337955474854

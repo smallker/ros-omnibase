@@ -5,7 +5,7 @@ public:
     float compute(float now);
     void reset();
     float setpoint;
-
+    void setPid(float kp, float ki, float kd);
 private:
     float kp, ki, kd;
     float i_err;

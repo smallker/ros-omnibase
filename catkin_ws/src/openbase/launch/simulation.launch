@@ -6,7 +6,7 @@
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg urdf_file)" />
   <arg name="base_frame_id" value="simulation"/>
   <arg name="odom_frame_id" default="odom"/>
-  <node name="$(anon node_odometry)" pkg="openbase" type="node_odometry.py" output="screen">
+  <node name="$(anon node_odometry)" pkg="openbase" type="node_odometry.py">
     <rosparam subst_value="true">
       base_frame_id: $(arg base_frame_id)
       odom_frame_id: $(arg odom_frame_id)
@@ -22,12 +22,12 @@
       wheel_base: $(arg wheel_base)
     </rosparam>
   </node>
-  <node name="$(anon node_autonomous)" pkg="openbase" type="node_autonomous.py" output="screen">
+  <!-- <node name="$(anon node_autonomous)" pkg="openbase" type="node_autonomous.py" output="screen">
     <rosparam subst_value="true">
       base_frame_id: $(arg base_frame_id)
       odom_frame_id: $(arg odom_frame_id)
     </rosparam>
-  </node>
+  </node> -->
   <node name="teleop" pkg="openbase" type="node_teleop.py" output="screen"/>
 
 </launch>

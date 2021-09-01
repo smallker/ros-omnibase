@@ -172,8 +172,8 @@ if __name__=="__main__":
 
     rospy.init_node('teleop')
 
-    speed = rospy.get_param("~speed", 0.24)
-    turn = rospy.get_param("~turn", 0.16)
+    speed = rospy.get_param("~speed", 0.3)
+    turn = rospy.get_param("~turn", 0.2)
     repeat = rospy.get_param("~repeat_rate", 0.0)
     key_timeout = rospy.get_param("~key_timeout", 0.0)
     if key_timeout == 0.0:
