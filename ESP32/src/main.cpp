@@ -114,6 +114,7 @@ void initNode(void *parameters)
       nh.subscribe(goal_y_pid_sub);
       nh.subscribe(goal_w_pid_sub);
       nh.advertise(pose_pub);
+      heading = 0;
     }
     if (client.connected() == 1)
     {

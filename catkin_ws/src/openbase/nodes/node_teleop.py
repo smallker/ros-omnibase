@@ -68,7 +68,8 @@ speedBindings={
 class PublishThread(threading.Thread):
     def __init__(self, rate):
         super(PublishThread, self).__init__()
-        self.publisher = rospy.Publisher('cmd_vel', Twist, queue_size = 1)
+        self.base_frame_id = rospy.get_param('~base_frame_id')
+        self.publisher = rospy.Publisher(f'/{self.base_frame_id}/cmd_vel', Twist, queue_size = 1)
         self.x = 0.0
         self.y = 0.0
         self.z = 0.0
@@ -170,7 +171,7 @@ if __name__=="__main__":
     if os.name != 'nt':
         settings = termios.tcgetattr(sys.stdin)
 
-    rospy.init_node('teleop')
+    rospy.init_node('teleop', anonymous=True)
 
     speed = rospy.get_param("~speed", 0.3)
     turn = rospy.get_param("~turn", 0.2)

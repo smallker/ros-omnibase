@@ -54,7 +54,7 @@ class RobotMockNode:
         rospy.init_node('mock_robot', anonymous=True)
         rospy.loginfo('ROBOT SIMULATION STARTED')
         self.read_param()
-        rospy.Subscriber('/cmd_vel', Twist, callback=self.on_twist)
+        rospy.Subscriber(f'/{self.base_frame_id}/cmd_vel', Twist, callback=self.on_twist)
         rospy.Subscriber('/reset_pos', Empty, callback=self.on_reset_pos)
         self.pose_publisher = rospy.Publisher(f'/{self.base_frame_id}/pose_data', Pose2D, queue_size=10)
         self.goal_publisher = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)

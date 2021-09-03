@@ -62,7 +62,7 @@ void onGoalXPid(const geometry_msgs::Point &msg_data);
 void onGoalYPid(const geometry_msgs::Point &msg_data);
 void onGoalWPid(const geometry_msgs::Point &msg_data);
 // Inisialisasi ros subscriber
-ros::Subscriber<geometry_msgs::Twist> vel_sub("/cmd_vel", onCmdVel);
+ros::Subscriber<geometry_msgs::Twist> vel_sub("/real/cmd_vel", onCmdVel);
 ros::Subscriber<geometry_msgs::Point> pid_sub("/pid", onSetMotorPid);
 ros::Subscriber<geometry_msgs::PoseStamped> goal_sub("/move_base_simple/goal", onMoveBaseToGoal);
 ros::Subscriber<std_msgs::Empty> rst_pos_sub("/reset_pos", onResetPose);

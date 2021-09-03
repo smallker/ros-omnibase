@@ -28,6 +28,10 @@
       odom_frame_id: $(arg odom_frame_id)
     </rosparam>
   </node> -->
-  <node name="teleop" pkg="openbase" type="node_teleop.py" output="screen"/>
+  <node name="$(anon teleop)" pkg="openbase" type="node_teleop.py" output="screen">
+    <rosparam subst_value="true">
+      base_frame_id: $(arg base_frame_id)
+    </rosparam>
+  </node>
 
 </launch>
