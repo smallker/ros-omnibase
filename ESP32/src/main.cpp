@@ -58,17 +58,6 @@ void onMoveBaseToGoal(const geometry_msgs::PoseStamped &msg_data)
   pose_control_begin = true;
 }
 
-void onGoalXPid(const geometry_msgs::Point &msg_data){
-  goal_x.setPid(msg_data.x, msg_data.y, msg_data.z);
-}
-
-void onGoalYPid(const geometry_msgs::Point &msg_data){
-  goal_y.setPid(msg_data.x, msg_data.y, msg_data.z);
-}
-
-void onGoalWPid(const geometry_msgs::Point &msg_data){
-  goal_w.setPid(msg_data.x, msg_data.y, msg_data.z);
-}
 /*
   LED akan berkedip setiap 300ms saat robot
   belum tersambung dan berkedip setiap 2s
@@ -80,7 +69,7 @@ void blink(void *parameters)
   for (;;)
   {
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    vTaskDelay(is_ros_ready ? 2000 : 300);
+    vTaskDelay(is_ros_ready ? 2000/portTICK_PERIOD_MS : 300/portTICK_PERIOD_MS);
   }
 }
 
@@ -103,6 +92,7 @@ void initNode(void *parameters)
       vTaskDelay(10 / portTICK_PERIOD_MS);
       if (WiFi.softAPgetStationNum() > 0)
         break;
+      else is_ros_ready = false;
     }
     if (client.connected() != 1)
     {
@@ -110,9 +100,6 @@ void initNode(void *parameters)
       nh.subscribe(vel_sub);
       nh.subscribe(rst_pos_sub);
       nh.subscribe(goal_sub);
-      nh.subscribe(goal_x_pid_sub);
-      nh.subscribe(goal_y_pid_sub);
-      nh.subscribe(goal_w_pid_sub);
       nh.advertise(pose_pub);
       heading = 0;
     }
@@ -282,7 +269,7 @@ void setup()
   // Task yang paling sering dijalankan diberikan prioritas paling tinggi
   // sem_i2c = xSemaphoreCreateMutex();
   xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);             // Pengaturan akses poin
-  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 1, &blink_task, 1);                      // Test apakah RTOS dapat berjalan
+  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);                      // Test apakah RTOS dapat berjalan
   xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);                      // Inisialisasi ros node
   xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);           // Task publish ros messsage
   xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);               // Membaca sensor kompas

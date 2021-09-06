@@ -58,14 +58,8 @@ void onCmdVel(const geometry_msgs::Twist &msg_data);
 void onSetMotorPid(const geometry_msgs::Point &msg_data);
 void onMoveBaseToGoal(const geometry_msgs::PoseStamped &msg_data);
 void onResetPose(const std_msgs::Empty &mgs_data);
-void onGoalXPid(const geometry_msgs::Point &msg_data);
-void onGoalYPid(const geometry_msgs::Point &msg_data);
-void onGoalWPid(const geometry_msgs::Point &msg_data);
 // Inisialisasi ros subscriber
 ros::Subscriber<geometry_msgs::Twist> vel_sub("/real/cmd_vel", onCmdVel);
 ros::Subscriber<geometry_msgs::Point> pid_sub("/pid", onSetMotorPid);
 ros::Subscriber<geometry_msgs::PoseStamped> goal_sub("/move_base_simple/goal", onMoveBaseToGoal);
 ros::Subscriber<std_msgs::Empty> rst_pos_sub("/reset_pos", onResetPose);
-ros::Subscriber<geometry_msgs::Point> goal_x_pid_sub("/goal_x_pid", onGoalXPid);
-ros::Subscriber<geometry_msgs::Point> goal_y_pid_sub("/goal_y_pid", onGoalYPid);
-ros::Subscriber<geometry_msgs::Point> goal_w_pid_sub("/goal_w_pid", onGoalWPid);
