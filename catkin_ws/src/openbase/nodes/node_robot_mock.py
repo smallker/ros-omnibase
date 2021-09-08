@@ -25,7 +25,6 @@ class RobotMockNode:
                 goal = PoseStamped()
                 goal.pose.position.x = self.pose.x
                 goal.pose.position.y = self.pose.y
-                self.goal_publisher.publish(goal)
 
             rospy.sleep(self.sampling_time)
 
@@ -49,7 +48,6 @@ class RobotMockNode:
         self.pose.x = 0
         self.pose.y = 0
         self.pose.theta = 0
-
     def listen(self):
         rospy.init_node('mock_robot', anonymous=True)
         rospy.loginfo('ROBOT SIMULATION STARTED')
@@ -57,7 +55,6 @@ class RobotMockNode:
         rospy.Subscriber(f'/{self.base_frame_id}/cmd_vel', Twist, callback=self.on_twist)
         rospy.Subscriber('/reset_pos', Empty, callback=self.on_reset_pos)
         self.pose_publisher = rospy.Publisher(f'/{self.base_frame_id}/pose_data', Pose2D, queue_size=10)
-        self.goal_publisher = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
         Thread(target=self.__encoder, args=(), daemon=True).start()
         Thread(target=self.publish_encoder, args=(), daemon=True).start()
         rospy.spin()

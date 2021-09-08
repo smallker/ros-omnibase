@@ -1,6 +1,11 @@
 <launch>
-
+  <arg name="base_frame_id" value="rviz_frame"/>
   <node name="rviz" pkg="rviz" type="rviz"
         args="-d $(find openbase)/config/view.rviz" />
-
+  <node name="node_marker" pkg="openbase" type="node_marker.py"/>
+  <node name="$(anon teleop)" pkg="openbase" type="node_teleop.py" output="screen">
+    <rosparam subst_value="true">
+      base_frame_id: $(arg base_frame_id)
+    </rosparam>
+  </node>
 </launch>

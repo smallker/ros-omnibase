@@ -189,7 +189,7 @@ if __name__=="__main__":
     status = 0
     movement_mode = rospy.Publisher('/movement_mode', Bool, queue_size=10)
     try:
-        pub_thread.wait_for_subscribers()
+        # pub_thread.wait_for_subscribers()
         pub_thread.update(x, y, z, th, speed, turn)
 
         print(msg)
@@ -199,6 +199,9 @@ if __name__=="__main__":
             if key == '3':
                 rospy.Publisher(f'/reset_pos', Empty, queue_size=1).publish()
                 rospy.loginfo('RESET POSITION')
+            if key == '2':
+                rospy.Publisher('/marker_follower', Empty, queue_size=1).publish()
+                rospy.loginfo('START MARKER FOLLOWER')
             if key in moveBindings.keys():
                 x = moveBindings[key][0]
                 y = moveBindings[key][1]

@@ -2,10 +2,11 @@ from math import pi
 import math
 from time import time
 import rospy
-from std_msgs.msg import Int32, Empty
+from std_msgs.msg import Empty
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Point
 from geometry_msgs.msg import PoseStamped
+from visualization_msgs.msg import Marker
 from openbase.pid import Pid
 from tf.transformations import euler_from_quaternion
 import numpy as np
@@ -27,7 +28,6 @@ class NodeAutonomous:
             msg_data.pose.pose.orientation.z,
             msg_data.pose.pose.orientation.w,
         ])
-
         # Konversi dari quaternion ke euler (0 - 360 deg)
         euler_deg = yaw * 180 / math.pi
         if euler_deg < 0:
@@ -51,18 +51,18 @@ class NodeAutonomous:
         if self.finish is not True:
             self.twist.linear.x = self.pid_y.pid()
             self.twist.linear.y = - self.pid_x.pid()
-            self.twist.angular.z = - self.pid_w.pid()
+            self.twist.angular.z = self.pid_w.pid()
             self.cmd_vel.publish(self.twist)
 
         if abs(self.pid_x.sp - self.pid_x.pos) < 0.01 and abs(self.pid_y.sp - self.pid_y.pos) < 0.01 and abs(self.pid_w.sp - self.pid_w.pos) < 0.01:
-            self.position += 1
             if self.position < self.arr.__len__():
                 self.pid_x.reset_err()
                 self.pid_y.reset_err()
                 self.pid_w.reset_err()
-                self.pid_x.sp = self.arr[self.position][0]
-                self.pid_y.sp = self.arr[self.position][1]
-                self.pid_w.sp = self.arr[self.position][2]
+                self.pid_x.sp = self.arr[self.position].x
+                self.pid_y.sp = self.arr[self.position].y
+                self.pid_w.sp = self.arr[self.position].z
+                self.position += 1
             else:
                 self.finish = True
                 self.twist.linear.x = 0
@@ -79,6 +79,7 @@ class NodeAutonomous:
         self.twist.angular.z = 0
         self.cmd_vel.publish(self.twist)
         self.finish = True
+        self.position = 0
 
     def __setpoint(self, msg:PoseStamped):
         (roll, pitch, yaw) = euler_from_quaternion([
@@ -87,7 +88,6 @@ class NodeAutonomous:
             msg.pose.orientation.z,
             msg.pose.orientation.w,
         ])
-
         # Konversi dari quaternion ke euler (0 - 360 deg)
         euler_deg = yaw * 180 / math.pi
         if euler_deg < 0:
@@ -101,17 +101,30 @@ class NodeAutonomous:
         self.start_timestamp = int(time() * 1000)
         self.finish = False
 
+    def on_marker_set(self, msg:Marker):
+        self.marker = msg
+
+    def on_marker_follower(self, msg:Empty):
+        self.arr = self.marker.points
+        rospy.loginfo(self.position)
+        self.pid_x.sp = self.arr[self.position].x
+        self.pid_y.sp = self.arr[self.position].y
+        self.pid_w.sp = self.arr[self.position].y
+        self.finish = False
+
     def __init__(self) -> None:
-        self.arr = [[0, 0, 0]]
-        self.pid_x.sp = self.arr[self.position][0]
-        self.pid_y.sp = self.arr[self.position][1]
-        self.pid_w.sp = self.arr[self.position][2]
+        point = Point()
+        self.arr = [point]
+        self.pid_x.sp = self.arr[self.position].x
+        self.pid_y.sp = self.arr[self.position].y
+        self.pid_w.sp = self.arr[self.position].z
         rospy.init_node('node_autonomous', anonymous=True)
         self.base_frame_id = rospy.get_param('~base_frame_id')
         rospy.Subscriber(f'/{self.base_frame_id}/odom', Odometry, self.on_odometry)
-        rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.__setpoint)
         rospy.Subscriber('/reset_pos', Empty, self.__reset)
-        self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+        rospy.Subscriber('/marker', Marker, self.on_marker_set)
+        rospy.Subscriber('/marker_follower', Empty, self.on_marker_follower)
+        self.cmd_vel = rospy.Publisher(f'/{self.base_frame_id}/cmd_vel', Twist, queue_size=1)
 
 if __name__ == "__main__":
     n = NodeAutonomous()

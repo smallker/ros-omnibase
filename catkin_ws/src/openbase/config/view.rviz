@@ -7,9 +7,10 @@ Panels:
         - /Global Options1
         - /Status1
         - /Grid1
-        - /MarkerArray1
         - /Axes1
         - /Axes2
+        - /Marker1
+        - /Marker2
       Splitter Ratio: 0.5
     Tree Height: 441
   - Class: rviz/Selection
@@ -59,13 +60,13 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Class: rviz/MarkerArray
+    - Alpha: 1
+      Class: rviz/Axes
       Enabled: true
-      Marker Topic: visualization_marker_array
-      Name: MarkerArray
-      Namespaces:
-        {}
-      Queue Size: 100
+      Length: 0.10000000149011612
+      Name: Axes
+      Radius: 0.029999999329447746
+      Reference Frame: simulation
       Value: true
     - Alpha: 1
       Class: rviz/Axes
@@ -73,15 +74,23 @@ Visualization Manager:
       Length: 0.10000000149011612
       Name: Axes
       Radius: 0.029999999329447746
-      Reference Frame: simulation
-      Value: false
-    - Alpha: 1
-      Class: rviz/Axes
-      Enabled: true
-      Length: 0.10000000149011612
-      Name: Axes
-      Radius: 0.029999999329447746
       Reference Frame: real
+      Value: false
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /marker
+      Name: Marker
+      Namespaces:
+        "": true
+      Queue Size: 10
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /simulation/marker
+      Name: Marker
+      Namespaces:
+        "": true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -120,7 +129,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 100.30917358398438
+      Scale: 148.53851318359375
       Target Frame: <Fixed Frame>
       X: 0.308801531791687
       Y: 0.07403337955474854
