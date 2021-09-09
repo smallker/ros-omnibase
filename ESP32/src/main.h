@@ -58,6 +58,9 @@ volatile int sp_heading;
 volatile int last_compass_reading;
 volatile bool is_ros_ready, pose_control_begin;
 volatile unsigned long last_command_time;
+volatile bool finish;
+volatile int marker_array_position;
+
 // inisialisasi objek motor
 Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B);
 Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B);
@@ -66,6 +69,6 @@ Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
 // inisialisasi objek kinematik
 Kinematic base(BASE_OMNI_Y);
 
-Pid goal_x = Pid(5, 0, 1);
-Pid goal_y = Pid(5, 0, 1);
-Pid goal_w = Pid(5, 0, 1);
+Pid goal_x = Pid(5, 0, 0);
+Pid goal_y = Pid(5, 0, 0);
+Pid goal_w = Pid(5, 0, 0);

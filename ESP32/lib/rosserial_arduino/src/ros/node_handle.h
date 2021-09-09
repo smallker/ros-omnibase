@@ -91,9 +91,9 @@ namespace ros {
 
   /* Node Handle */
   template<class Hardware,
-           int MAX_SUBSCRIBERS=15,
+           int MAX_SUBSCRIBERS=20,
            int MAX_PUBLISHERS=15,
-           int INPUT_SIZE=512,
+           int INPUT_SIZE=1024,
            int OUTPUT_SIZE=3000>
   class NodeHandle_ : public NodeHandleBase_
   {

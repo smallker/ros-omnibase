@@ -13,7 +13,7 @@ float Pid::compute(float now){
     last_err = err;
     i_err = i_err + err;
     float result = (kp * err) + (ki * i_err) + (kd * d_err);
-    return result;
+    return result > 0.5? 0.5 : result;
 }
 
 void Pid::reset(){

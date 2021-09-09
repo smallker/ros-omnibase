@@ -43,7 +43,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 1
-      Cell Size: 1
+      Cell Size: 0.30000001192092896
       Class: rviz/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -62,20 +62,20 @@ Visualization Manager:
       Value: true
     - Alpha: 1
       Class: rviz/Axes
-      Enabled: true
-      Length: 0.10000000149011612
-      Name: Axes
-      Radius: 0.029999999329447746
-      Reference Frame: simulation
-      Value: true
-    - Alpha: 1
-      Class: rviz/Axes
       Enabled: false
       Length: 0.10000000149011612
       Name: Axes
       Radius: 0.029999999329447746
-      Reference Frame: real
+      Reference Frame: simulation
       Value: false
+    - Alpha: 1
+      Class: rviz/Axes
+      Enabled: true
+      Length: 0.10000000149011612
+      Name: Axes
+      Radius: 0.029999999329447746
+      Reference Frame: real
+      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /marker
@@ -86,7 +86,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /simulation/marker
+      Marker Topic: /real/marker
       Name: Marker
       Namespaces:
         "": true
@@ -129,7 +129,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 148.53851318359375
+      Scale: 175.8238983154297
       Target Frame: <Fixed Frame>
       X: 0.308801531791687
       Y: 0.07403337955474854

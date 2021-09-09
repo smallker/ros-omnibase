@@ -20,12 +20,6 @@ void ICACHE_RAM_ATTR EN3_ISR()
   portEXIT_CRITICAL(&mux);
 }
 
-void onSetMotorPid(const geometry_msgs::Point &msg_data)
-{
-  m3.pid(msg_data.x, msg_data.y, msg_data.z, 1000);
-  Serial.println(msg_data.x);
-}
-
 void onCmdVel(const geometry_msgs::Twist &msg_data)
 {
   vel_data = msg_data;
@@ -58,6 +52,19 @@ void onMoveBaseToGoal(const geometry_msgs::PoseStamped &msg_data)
   pose_control_begin = true;
 }
 
+void onMarkerSet(const visualization_msgs::Marker &msg_data)
+{
+  marker_data = msg_data;
+}
+
+void onMarkerFollower(const std_msgs::Empty &msg_data)
+{
+  Serial.println("MARKER FOLLOWER STARTED");
+  finish = false;
+  for(int i =0 ; i< marker_data.points_length; i++){
+    Serial.printf("X : %.f Y : %.f Z : %.f\n",marker_data.points[i].x, marker_data.points[i].y, marker_data.points[i].z);
+  }
+}
 /*
   LED akan berkedip setiap 300ms saat robot
   belum tersambung dan berkedip setiap 2s
@@ -69,7 +76,7 @@ void blink(void *parameters)
   for (;;)
   {
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    vTaskDelay(is_ros_ready ? 2000/portTICK_PERIOD_MS : 300/portTICK_PERIOD_MS);
+    vTaskDelay(is_ros_ready ? 2000 / portTICK_PERIOD_MS : 300 / portTICK_PERIOD_MS);
   }
 }
 
@@ -92,14 +99,17 @@ void initNode(void *parameters)
       vTaskDelay(10 / portTICK_PERIOD_MS);
       if (WiFi.softAPgetStationNum() > 0)
         break;
-      else is_ros_ready = false;
+      else
+        is_ros_ready = false;
     }
     if (client.connected() != 1)
     {
       nh.initNode();
       nh.subscribe(vel_sub);
       nh.subscribe(rst_pos_sub);
-      nh.subscribe(goal_sub);
+      // nh.subscribe(goal_sub);
+      nh.subscribe(marker_sub);
+      nh.subscribe(marker_follower_sub);
       nh.advertise(pose_pub);
       heading = 0;
     }
@@ -181,11 +191,6 @@ void moveBase(void *parameters)
 {
   for (;;)
   {
-    analogWriteFrequency(10000);
-    m1.pid(7, 0.05, 1, 255);
-    m2.pid(7, 0.05, 1, 255);
-    m3.pid(6, 0.05, 1, 255);
-    base.setMotor(m1, m2, m3);
     if (WiFi.softAPgetStationNum() > 0 && (millis() - last_command_time < 500))
     {
       float lin_x = vel_data.linear.y;
@@ -245,13 +250,37 @@ void poseControl(void *parameters)
 {
   for (;;)
   {
-    if (pose_control_begin)
+    // if (pose_control_begin)
+    // {
+    //   float lin_x = goal_x.compute(base.x);
+    //   float lin_y = goal_y.compute(base.y);
+    //   float ang_z = goal_w.compute(base.w);
+    //   base.setSpeed(-lin_x, lin_y, -ang_z);
+    //   vTaskDelay(10 / portTICK_PERIOD_MS);
+    // }
+    if (!finish)
     {
       float lin_x = goal_x.compute(base.x);
       float lin_y = goal_y.compute(base.y);
       float ang_z = goal_w.compute(base.w);
       base.setSpeed(-lin_x, lin_y, -ang_z);
-      vTaskDelay(10/portTICK_PERIOD_MS);
+      vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+    if (abs(goal_x.setpoint - base.x) < 0.01 and abs(goal_y.setpoint - base.y) < 0.01 and abs(goal_w.setpoint - base.w) < 0.01)
+    {
+      if (marker_array_position < marker_data.points_length){
+        goal_x.reset();
+        goal_y.reset();
+        goal_w.reset();
+        goal_x.setpoint = marker_data.points[marker_array_position].x;
+        goal_y.setpoint = marker_data.points[marker_array_position].y;
+        goal_w.setpoint = 0;
+        marker_array_position++;
+      }
+      else{
+        finish = true;
+        marker_array_position = 0;
+      }
     }
   }
 }
@@ -259,9 +288,14 @@ void poseControl(void *parameters)
 void setup()
 {
   Serial.begin(115200);
+  analogWriteFrequency(10000);
   attachInterrupt(digitalPinToInterrupt(m1.en_a), EN1_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m2.en_a), EN2_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
+  m1.pid(7, 0.05, 1, 255);
+  m2.pid(7, 0.05, 1, 255);
+  m3.pid(6, 0.05, 1, 255);
+  base.setMotor(m1, m2, m3);
   // Spawn task RTOS
   // xTaskCreatePinnedToCore(fungsi, "nama fungsi", alokasi memori, prioritas, task handle, core);
   // ESP32 memiliki 3 core, yaitu core 0, core 1, dan ULP
