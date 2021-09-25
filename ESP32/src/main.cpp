@@ -59,10 +59,10 @@ void onMarkerSet(const visualization_msgs::Marker &msg_data)
 
 void onMarkerFollower(const std_msgs::Empty &msg_data)
 {
-  Serial.println("MARKER FOLLOWER STARTED");
+  DEBUG.println("MARKER FOLLOWER STARTED");
   finish = false;
   for(int i =0 ; i< marker_data.points_length; i++){
-    Serial.printf("X : %.f Y : %.f Z : %.f\n",marker_data.points[i].x, marker_data.points[i].y, marker_data.points[i].z);
+    DEBUG.printf("X : %.f Y : %.f Z : %.f\n",marker_data.points[i].x, marker_data.points[i].y, marker_data.points[i].z);
   }
 }
 /*
@@ -83,12 +83,6 @@ void blink(void *parameters)
 /*
   Inisialisasi ros node
   Mendaftarkan publisher dan subscriber
-  Publisher :
-  - heading_pub -> data kompas
-  - encoder_pub -> data rotary encoder
-  Subscriber :
-  - vel_sub     -> data setpoint kecepatan robot
-  - rst_pos_sub -> reset posisi robot
 */
 void initNode(void *parameters)
 {
@@ -201,7 +195,7 @@ void moveBase(void *parameters)
     else
       base.setSpeed(0, 0, 0);
     vTaskDelay(10);
-  }
+  } 
 }
 
 /*
@@ -216,9 +210,9 @@ void countRpm(void *parameters)
     m1.calculateRpm(sampling_time_ms);
     m2.calculateRpm(sampling_time_ms);
     m3.calculateRpm(sampling_time_ms);
-    base.omnibaseOdom(heading);
-    // Serial.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
-    // Serial.printf("m1 : %.3f m2 : %.3f m3 : %.3f\n", m1.speed_ms, m2.speed_ms, m3.speed_ms);
+    base.calculatePosition(heading);
+    // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
+    // DEBUG.printf("m1 : %.3f m2 : %.3f m3 : %.3f\n", m1.speed_ms, m2.speed_ms, m3.speed_ms);
     // vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
     vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
   }
@@ -250,14 +244,6 @@ void poseControl(void *parameters)
 {
   for (;;)
   {
-    // if (pose_control_begin)
-    // {
-    //   float lin_x = goal_x.compute(base.x);
-    //   float lin_y = goal_y.compute(base.y);
-    //   float ang_z = goal_w.compute(base.w);
-    //   base.setSpeed(-lin_x, lin_y, -ang_z);
-    //   vTaskDelay(10 / portTICK_PERIOD_MS);
-    // }
     if (!finish)
     {
       float lin_x = goal_x.compute(base.x);
@@ -287,7 +273,7 @@ void poseControl(void *parameters)
 
 void setup()
 {
-  Serial.begin(115200);
+  DEBUG.begin(115200);
   analogWriteFrequency(10000);
   attachInterrupt(digitalPinToInterrupt(m1.en_a), EN1_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m2.en_a), EN2_ISR, FALLING);

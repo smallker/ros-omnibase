@@ -43,7 +43,7 @@ void Kinematic::setSpeed(float lin_x, float lin_y, float ang_z)
     }
 }
 
-void Kinematic::omnibaseOdom(float heading)
+void Kinematic::calculatePosition(float heading)
 {
     float v1 = (m1->speed_ms);
     float v2 = (m2->speed_ms);

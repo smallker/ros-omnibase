@@ -6,6 +6,10 @@
 #include <pid.h>
 #include "wifi_setup.h"
 #include "ros_setup.h"
+
+// Port serial untuk debugging
+#define DEBUG   Serial
+
 // Map input/output ke nama yg mudah diingat
 // kode M untuk pin motor
 #define M1_A 16
@@ -71,4 +75,4 @@ Kinematic base(BASE_OMNI_Y);
 
 Pid goal_x = Pid(5, 0, 0);
 Pid goal_y = Pid(5, 0, 0);
-Pid goal_w = Pid(5, 0, 0);
+Pid goal_w = Pid(7, 0, 0);

@@ -86,7 +86,7 @@ class OdometryNode:
         line_point.y = pose.y
         self.marker.points.append(line_point)
         self.marker_pub.publish(self.marker)
-        # rospy.loginfo(f'{pose.x},{pose.y},{pose.theta}')
+        rospy.loginfo(f'{pose.x},{pose.y},{pose.theta}')
 if __name__ == '__main__':
     try:
         rospy.loginfo('running node odom')
