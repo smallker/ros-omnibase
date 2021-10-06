@@ -19,7 +19,6 @@ private:
     float r_base = 0.112; // jari-jari base (khusus roda 3)
     double sqrt3 = 1.732050807568877193176604123436845839023590087890625;
     float d_wheel = 0.06;
-
 public:
     float x, y, w;
     Kinematic(Base base);

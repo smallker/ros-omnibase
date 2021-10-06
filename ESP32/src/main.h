@@ -73,6 +73,6 @@ Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
 // inisialisasi objek kinematik
 Kinematic base(BASE_OMNI_Y);
 
-Pid goal_x = Pid(5, 0, 0);
-Pid goal_y = Pid(5, 0, 0);
+Pid goal_x = Pid(5, 0, 1);
+Pid goal_y = Pid(5, 0, 1);
 Pid goal_w = Pid(7, 0, 0);

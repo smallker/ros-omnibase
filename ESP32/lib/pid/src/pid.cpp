@@ -18,10 +18,10 @@ float Pid::compute(float now)
     float result = (kp * err) + (ki * i_err) + (kd * d_err);
     if (result >= 0)
     {
-        return result > 0.5 ? 0.5 : result;
+        return result > limit ? limit : result;
     }
     else {
-        return result < - 0.5 ? - 0.5 : result;
+        return result < - limit ? - limit : result;
     }
 }
 

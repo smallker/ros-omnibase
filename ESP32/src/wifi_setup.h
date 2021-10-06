@@ -2,7 +2,7 @@
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#define SSID "OpenBase"
+#define SSID "openbase"
 #define PASS "openbase"
 
 #define AP
