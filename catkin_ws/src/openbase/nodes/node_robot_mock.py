@@ -4,24 +4,22 @@ import rospy
 from std_msgs.msg import Empty
 from geometry_msgs.msg import Twist, Pose2D, PoseStamped
 from threading import Thread
-from openbase.kinematics import Kinematics
+from openbase.kinematics import DifferentialDrive, Kinematics, OmniBaseY
 
 class RobotMockNode:
     pose:Pose2D = Pose2D()
     twist_msg:Twist = None
     sampling_time = 0.07
     def __encoder(self):
-        move = Kinematics()
+        move = DifferentialDrive(self.sampling_time, self.base_wheel)
         while(True):
             if(self.twist_msg is not None):
-                v1, v2, v3 = move.set_speed(self.twist_msg)
-                vmx = (2 * v2 - v1 - v3) / 3 # Sampling kecepatan x
-                vmy = ((math.sqrt(3) * v3) - (math.sqrt(3) * v1)) / 3 # Sampling kecepatan y
-                self.pose.theta += ((v1 + v2+ v3) / (self.base_wheel * 3)) / (1 / self.sampling_time) # Dalam radian
+                vmx, vmy, dTh = move.set_speed(self.twist_msg, self.pose.theta)
+                self.pose.theta += dTh
+                print(f'vmx : {vmx} vmy : {vmy} dTh : {dTh}')
                 self.pose.x -= ((math.cos(self.pose.theta) * vmx) - (math.sin(self.pose.theta) * vmy)) / (1 / self.sampling_time)# x (meter)
                 self.pose.y -= ((math.sin(self.pose.theta) * vmx) + (math.cos(self.pose.theta) * vmy)) / (1 / self.sampling_time)# y (meter)
                 self.pose_publisher.publish(self.pose)
-
                 goal = PoseStamped()
                 goal.pose.position.x = self.pose.x
                 goal.pose.position.y = self.pose.y
