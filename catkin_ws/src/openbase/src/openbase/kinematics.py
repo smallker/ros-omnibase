@@ -30,7 +30,11 @@ class OmniBaseY(Kinematics):
         vmx = (2 * v2 - v1 - v3) / 3 # Sampling kecepatan x
         vmy = ((math.sqrt(3) * v3) - (math.sqrt(3) * v1)) / 3 # Sampling kecepatan y
         dTh = ((v1 + v2+ v3) / (self.base_wheel * 3)) / (1 / self.sampling_time)
-        return vmx, vmy, dTh
+        deltaX = - ((math.cos(heading) * vmx) - (math.sin(heading) * vmy))
+        deltaY = - ((math.sin(heading) * vmx) + (math.cos(heading) * vmy))
+        deltaX = deltaX / (1 / self.sampling_time)
+        deltaY = deltaY / (1 / self.sampling_time)
+        return deltaX, deltaY, dTh
 
 class DifferentialDrive(Kinematics):
     radius = 0.03
@@ -40,21 +44,12 @@ class DifferentialDrive(Kinematics):
         self.base_wheel = base_wheel
 
     def set_speed(self, speed: Twist, heading: float):
-        x = speed.linear.x
-        w = speed.angular.z
-        vr = ((2 * x) + (w * self.base_wheel * 2)) / 2 * self.radius
-        vl = ((2 * x )- (w * self.base_wheel * 2)) / 2 * self.radius
-        dTh = ((self.radius / (self.base_wheel * 2)) * (vr - vl) )
-        deg = heading * 180 / math.pi
-        vmy = (1/2) * (vr + vl) * math.cos(deg)
-        vmx = (1/2) * (vr + vl) * math.sin(deg)
-        return vmx, vmy, dTh
-    
-    def get_odometry(self,speed:Twist, x, y, theta: float):
+        # Koreksi heading
+        heading = (((heading * 180/math.pi)+90)) * math.pi/180
         rightTravel = (speed.linear.x + (speed.angular.z * 0.1)) / (1/self.sampling_time)
         leftTravel = (speed.linear.x - (speed.angular.z * 0.1))/ (1/self.sampling_time)
         deltaTravel = (rightTravel + leftTravel) / 2
         deltaTheta = (rightTravel - leftTravel) / (self.base_wheel)
-        deltaX = deltaTravel * math.cos(theta)
-        deltaY = deltaTravel * math.sin(theta)
+        deltaX = deltaTravel * math.cos(heading)
+        deltaY = deltaTravel * math.sin(heading)
         return deltaX, deltaY, deltaTheta

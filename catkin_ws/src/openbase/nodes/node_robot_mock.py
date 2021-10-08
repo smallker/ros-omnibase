@@ -4,7 +4,7 @@ import rospy
 from std_msgs.msg import Empty, Float32
 from geometry_msgs.msg import Twist, Pose2D, PoseStamped
 from threading import Thread
-from openbase.kinematics import DifferentialDrive
+from openbase.kinematics import DifferentialDrive, OmniBaseY
 
 class RobotMockNode:
     pose:Pose2D = Pose2D()
@@ -14,12 +14,10 @@ class RobotMockNode:
         move = DifferentialDrive(self.sampling_time, self.base_wheel)
         while(True):
             if(self.twist_msg is not None):
-                vmx, vmy, dTh = move.get_odometry(self.twist_msg, self.pose.x, self.pose.y, self.pose.theta)
+                dx, dy, dTh = move.set_speed(self.twist_msg, self.pose.theta)
                 self.pose.theta += dTh
-                self.pose.x += vmx
-                self.pose.y += vmy
-                # self.pose.x += ((math.cos(self.pose.theta) * vmx) - (math.sin(self.pose.theta) * vmy))
-                # self.pose.y += ((math.sin(self.pose.theta) * vmx) + (math.cos(self.pose.theta) * vmy))
+                self.pose.x += dx
+                self.pose.y += dy
                 self.pose_publisher.publish(self.pose)
                 goal = PoseStamped()
                 goal.pose.position.x = self.pose.x
