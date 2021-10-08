@@ -61,8 +61,9 @@ void onMarkerFollower(const std_msgs::Empty &msg_data)
 {
   DEBUG.println("MARKER FOLLOWER STARTED");
   finish = false;
-  for(int i =0 ; i< marker_data.points_length; i++){
-    DEBUG.printf("X : %.f Y : %.f Z : %.f\n",marker_data.points[i].x, marker_data.points[i].y, marker_data.points[i].z);
+  for (int i = 0; i < marker_data.points_length; i++)
+  {
+    DEBUG.printf("X : %.f Y : %.f Z : %.f\n", marker_data.points[i].x, marker_data.points[i].y, marker_data.points[i].z);
   }
 }
 /*
@@ -96,7 +97,7 @@ void initNode(void *parameters)
       else
         is_ros_ready = false;
     }
-    if (client.connected() != 1)
+    if (rosClient.connected() != 1)
     {
       nh.initNode();
       nh.subscribe(vel_sub);
@@ -107,7 +108,7 @@ void initNode(void *parameters)
       nh.advertise(pose_pub);
       heading = 0;
     }
-    if (client.connected() == 1)
+    if (rosClient.connected() == 1)
     {
       nh.spinOnce();
     }
@@ -124,7 +125,7 @@ void publishMessage(void *parameter)
 {
   for (;;)
   {
-    if (client.connected() == 1)
+    if (rosClient.connected() == 1)
     {
       is_ros_ready = true;
       pose_pub.publish(&pose_data);
@@ -195,7 +196,7 @@ void moveBase(void *parameters)
     else
       base.setSpeed(0, 0, 0);
     vTaskDelay(10);
-  } 
+  }
 }
 
 /*
@@ -209,11 +210,9 @@ void countRpm(void *parameters)
   {
     m1.calculateRpm(sampling_time_ms);
     m2.calculateRpm(sampling_time_ms);
-    m3.calculateRpm(sampling_time_ms);
     base.calculatePosition(heading);
     // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
-    // DEBUG.printf("m1 : %.3f m2 : %.3f m3 : %.3f\n", m1.speed_ms, m2.speed_ms, m3.speed_ms);
-    // vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
+    // DEBUG.printf("m1 : %.3f m2 : %.3f\n", m1.speed_ms, m2.speed_ms);
     vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
   }
 }
@@ -254,7 +253,8 @@ void poseControl(void *parameters)
     }
     if (abs(goal_x.setpoint - base.x) < 0.01 and abs(goal_y.setpoint - base.y) < 0.01 and abs(goal_w.setpoint - base.w) < 0.01)
     {
-      if (marker_array_position < marker_data.points_length){
+      if (marker_array_position < marker_data.points_length)
+      {
         goal_x.reset();
         goal_y.reset();
         goal_w.reset();
@@ -263,11 +263,61 @@ void poseControl(void *parameters)
         goal_w.setpoint = 0;
         marker_array_position++;
       }
-      else{
+      else
+      {
         finish = true;
         marker_array_position = 0;
       }
     }
+  }
+}
+
+void initWebSocket(void *parameters)
+{
+#ifndef AP
+  while (true)
+  {
+    if (WiFi.status() == WL_CONNECTED)
+      break;
+  }
+#endif
+
+  WiFiServer wifiServer(80);
+  wifiServer.begin();
+  DEBUG.println("WS server begin");
+  for (;;)
+  {
+    WiFiClient client = wifiServer.available();
+    if (client)
+    {
+      while (client.connected())
+      {
+        while (client.available() > 0)
+        {
+          String c = client.readStringUntil('\n');
+          StaticJsonDocument<1000> doc;
+          DeserializationError error = deserializeJson(doc, c);
+          if (error)
+          {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            return;
+          }
+          for (JsonObject item : doc.as<JsonArray>())
+          {
+            float x = item["x"];
+            float y = item["y"];
+            markers.points_length++;
+            markers.markers_x.push_back(x);
+            markers.markers_y.push_back(y);
+          }
+        }
+        vTaskDelay(1);
+      }
+      client.stop();
+      DEBUG.println("Client disconnected");
+    }
+    vTaskDelay(1);
   }
 }
 
@@ -280,24 +330,24 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
   m1.pid(7, 0.05, 1, 255);
   m2.pid(7, 0.05, 1, 255);
-  m3.pid(6, 0.05, 1, 255);
-  base.setMotor(m1, m2, m3);
+  base.setMotor(m1, m2);
   // Spawn task RTOS
   // xTaskCreatePinnedToCore(fungsi, "nama fungsi", alokasi memori, prioritas, task handle, core);
   // ESP32 memiliki 3 core, yaitu core 0, core 1, dan ULP
   // Sebisa mungkin prioritas task disamakan untuk menghindari crash
   // Task yang paling sering dijalankan diberikan prioritas paling tinggi
   // sem_i2c = xSemaphoreCreateMutex();
-  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);             // Pengaturan akses poin
-  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);                      // Test apakah RTOS dapat berjalan
-  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);                      // Inisialisasi ros node
-  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);           // Task publish ros messsage
+  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);    // Pengaturan akses poin
+  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);             // Test apakah RTOS dapat berjalan
+  xTaskCreatePinnedToCore(initWebSocket, "node", 10000, NULL, 5, &websocket_task, 0); // Inisialisasi ros node
+  // xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);           // Task publish ros messsage
   xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);               // Membaca sensor kompas
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);                    // Menggerakkan base robot
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);                       // Menghitung RPM
   xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);             // Set data untuk message MotorEncoder
   xTaskCreatePinnedToCore(poseControl, "pose control", 10000, NULL, 2, &pose_control_task, 1); // Set data untuk message MotorEncoder
 }
+
 void loop()
 {
   vTaskDelay(1);

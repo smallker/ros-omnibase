@@ -15,7 +15,7 @@ IPAddress server(192, 168, 43, 101); // IP PC yang terinstal ROS
 IPAddress ip_address;
 int status = WL_IDLE_STATUS;
 
-WiFiClient client;
+WiFiClient rosClient;
 
 class WiFiHardware
 {
@@ -25,17 +25,17 @@ public:
 
     void init()
     {
-        fcntl(client, F_SETFL, O_NONBLOCK);
-        client.connect(server, 11411);
+        fcntl(rosClient, F_SETFL, O_NONBLOCK);
+        rosClient.connect(server, 11411);
     }
     int read()
     {
-        return client.read();
+        return rosClient.read();
     }
     void write(uint8_t *data, int length)
     {
         for (int i = 0; i < length; i++)
-            client.write(data[i]);
+            rosClient.write(data[i]);
     }
     unsigned long time()
     {
