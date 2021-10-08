@@ -1,5 +1,6 @@
 import math
 from geometry_msgs.msg import Twist
+
 from abc import ABC, abstractclassmethod, abstractmethod
 
 class Kinematics(ABC):    
@@ -33,6 +34,7 @@ class OmniBaseY(Kinematics):
 
 class DifferentialDrive(Kinematics):
     radius = 0.03
+    theta = 0
     def __init__(self, sampling_time, base_wheel) -> None:
         self.sampling_time = sampling_time
         self.base_wheel = base_wheel
@@ -47,3 +49,12 @@ class DifferentialDrive(Kinematics):
         vmy = (1/2) * (vr + vl) * math.cos(deg)
         vmx = (1/2) * (vr + vl) * math.sin(deg)
         return vmx, vmy, dTh
+    
+    def get_odometry(self,speed:Twist, x, y, theta: float):
+        rightTravel = (speed.linear.x + (speed.angular.z * 0.1)) / (1/self.sampling_time)
+        leftTravel = (speed.linear.x - (speed.angular.z * 0.1))/ (1/self.sampling_time)
+        deltaTravel = (rightTravel + leftTravel) / 2
+        deltaTheta = (rightTravel - leftTravel) / (self.base_wheel)
+        deltaX = deltaTravel * math.cos(theta)
+        deltaY = deltaTravel * math.sin(theta)
+        return deltaX, deltaY, deltaTheta
