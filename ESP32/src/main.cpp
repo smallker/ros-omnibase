@@ -253,13 +253,13 @@ void poseControl(void *parameters)
     }
     if (abs(goal_x.setpoint - base.x) < 0.01 and abs(goal_y.setpoint - base.y) < 0.01 and abs(goal_w.setpoint - base.w) < 0.01)
     {
-      if (marker_array_position < marker_data.points_length)
+      if (marker_array_position < markers.points_length)
       {
         goal_x.reset();
         goal_y.reset();
         goal_w.reset();
-        goal_x.setpoint = marker_data.points[marker_array_position].x;
-        goal_y.setpoint = marker_data.points[marker_array_position].y;
+        goal_x.setpoint = markers.markers_x.at(marker_array_position);
+        goal_y.setpoint = markers.markers_y.at(marker_array_position);
         goal_w.setpoint = 0;
         marker_array_position++;
       }
@@ -285,6 +285,7 @@ void initWebSocket(void *parameters)
   WiFiServer wifiServer(80);
   wifiServer.begin();
   DEBUG.println("WS server begin");
+  unsigned long millis_server;
   for (;;)
   {
     WiFiClient client = wifiServer.available();
@@ -292,9 +293,14 @@ void initWebSocket(void *parameters)
     {
       while (client.connected())
       {
+        if(millis() - millis_server > 1000){
+          client.print(millis());
+          millis_server = millis();
+        }
         while (client.available() > 0)
         {
           String c = client.readStringUntil('\n');
+          DEBUG.println(c);
           StaticJsonDocument<1000> doc;
           DeserializationError error = deserializeJson(doc, c);
           if (error)
@@ -303,6 +309,7 @@ void initWebSocket(void *parameters)
             Serial.println(error.f_str());
             return;
           }
+          markers.points_length = 0;
           for (JsonObject item : doc.as<JsonArray>())
           {
             float x = item["x"];
@@ -311,6 +318,7 @@ void initWebSocket(void *parameters)
             markers.markers_x.push_back(x);
             markers.markers_y.push_back(y);
           }
+          finish = false;
         }
         vTaskDelay(1);
       }
@@ -319,6 +327,17 @@ void initWebSocket(void *parameters)
     }
     vTaskDelay(1);
   }
+}
+
+void publishData(void *parameters)
+{
+#ifndef AP
+  while (true)
+  {
+    if (ws_ready)
+      break;
+  }
+#endif
 }
 
 void setup()
@@ -345,7 +364,7 @@ void setup()
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);                    // Menggerakkan base robot
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);                       // Menghitung RPM
   xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);             // Set data untuk message MotorEncoder
-  xTaskCreatePinnedToCore(poseControl, "pose control", 10000, NULL, 2, &pose_control_task, 1); // Set data untuk message MotorEncoder
+  // xTaskCreatePinnedToCore(poseControl, "pose control", 10000, NULL, 2, &pose_control_task, 1); // Set data untuk message MotorEncoder
 }
 
 void loop()

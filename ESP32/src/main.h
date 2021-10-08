@@ -84,3 +84,6 @@ struct Markers
     std::vector<std::float_t> markers_y;
     int points_length;
 } markers;
+
+// Websocket control flow
+volatile bool ws_ready;
