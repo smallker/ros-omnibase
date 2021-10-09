@@ -2,6 +2,7 @@ import sys
 from time import sleep
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSlot
+from desktop.core.ws.odom_data import Odomdata
 from desktop.core.ws.ws import Ws
 from random import randint, random
 from desktop.ui import Ui_MainWindow
@@ -9,8 +10,8 @@ from desktop.ui.graph_window import GraphWindow
 
 app = QtWidgets.QApplication(sys.argv)
 main_window = QtWidgets.QMainWindow()
-graph_window = GraphWindow()
-
+en_graph_window = GraphWindow()
+ex_graph_window = GraphWindow()
 ui = Ui_MainWindow()
 
 ws = Ws()
@@ -27,20 +28,18 @@ def send():
 arr_x = list()
 arr_y = list()
 
-@pyqtSlot(str)
-def draw_graph(data:str):
-    arr = data.split(',')
+@pyqtSlot(Odomdata)
+def draw_graph(data:Odomdata):
     try:
-        x = float(arr[0])
-        y = float(arr[1])
+        x = data.data.x
+        y = data.data.y
         arr_x.append(x)
         arr_y.append(y)
         print(f'x : {x} y : {y}')
-        graph_window.plot(arr_x, arr_y)
-        graph_window.show()
+        en_graph_window.plot(arr_x, arr_y)
+        en_graph_window.show()
     except Exception as e:
         print(e)
-
 
 def main():
     ui.setupUi(main_window)

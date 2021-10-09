@@ -6,6 +6,8 @@ from PyQt5.QtCore import QThread, pyqtSignal
 import os
 import sys
 import errno
+
+from desktop.core.ws.odom_data import Odomdata, odomdata_from_dict
 class Ws(QThread):
     HOST = '192.168.43.100'
     PORT = 80
@@ -13,7 +15,7 @@ class Ws(QThread):
     start_logging = False
     log_file_name:str
 
-    robot_position = pyqtSignal(str)
+    robot_position = pyqtSignal(Odomdata)
 
     def add_data(self, x, y):
         self.data.append({'x':float(x), 'y': float(y)})
@@ -48,9 +50,15 @@ class Ws(QThread):
         self.init_connection()
         while True:
             if self.start_logging:
-                msg = self.client.recv(1000)
+                msg = self.client.recv(150)
                 msg = msg.decode('utf-8')
-                self.robot_position.emit(msg)
-                f = open(self.log_file_name, 'a')
-                f.write(f'{time()},'+msg+'\n')
-                f.close()
+                try:
+                    obj = json.loads(msg)
+                    odomdata = odomdata_from_dict(obj)
+                    self.robot_position.emit(odomdata)
+                    f = open(self.log_file_name, 'a')
+                    f.write(f'{time()},'+f'{odomdata.sc},{odomdata.data.x},{odomdata.data.y},{odomdata.data.w}'+'\n')
+                    f.close()
+                except Exception as e:
+                    # print(e)
+                    pass
