@@ -1,7 +1,7 @@
 import sys
 from time import sleep
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot, reset
 from desktop.core.ws.odom_data import Odomdata
 from desktop.core.ws.ws import Ws
 from random import randint, random
@@ -41,10 +41,35 @@ def draw_graph(data:Odomdata):
     except Exception as e:
         print(e)
 
+def move_forward():
+    ws.send_movement('forward')
+
+def move_backward():
+    ws.send_movement('backward')
+
+
+def turn_right():
+    ws.send_movement('turn_right')
+
+def turn_left():
+    ws.send_movement('turn_left')
+
+def move_stop():
+    ws.send_movement('stop')
+
+def reset_pos():
+    ws.send_reset()
+
 def main():
     ui.setupUi(main_window)
     ui.pb_save.clicked.connect(save)
     ui.pb_send.clicked.connect(send)
+    ui.pb_move_forward.clicked.connect(move_forward)
+    ui.pb_move_backward.clicked.connect(move_backward)
+    ui.pb_turn_left.clicked.connect(turn_left)
+    ui.pb_turn_right.clicked.connect(turn_right)
+    ui.pb_move_stop.clicked.connect(move_stop)
+    ui.pb_reset_pos.clicked.connect(reset_pos)
     main_window.show()
     ws.robot_position.connect(draw_graph)
     sys.exit(app.exec_())

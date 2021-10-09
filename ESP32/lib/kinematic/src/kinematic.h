@@ -16,9 +16,9 @@ class Kinematic
 private:
     Base base;
     Motor *m1, *m3, *m2, *m4;
-    float r_base = 0.112; // jari-jari base (khusus roda 3)
+    float r_base = 0.16; // jari-jari base (khusus roda 3)
     double sqrt3 = 1.732050807568877193176604123436845839023590087890625;
-    float d_wheel = 0.06;
+    float d_wheel = 0.065;
 public:
     float x, y, w;
     Kinematic(Base base);

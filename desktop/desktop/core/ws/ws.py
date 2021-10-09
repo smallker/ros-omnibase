@@ -8,32 +8,66 @@ import sys
 import errno
 
 from desktop.core.ws.odom_data import Odomdata, odomdata_from_dict
+
+
 class Ws(QThread):
     HOST = '192.168.43.100'
     PORT = 80
     data = []
     start_logging = False
-    log_file_name:str
-
+    log_file_name: str
+    linear_speed = 0.2
+    angular_speed = 0.6
     robot_position = pyqtSignal(Odomdata)
 
     def add_data(self, x, y):
-        self.data.append({'x':float(x), 'y': float(y)})
-    
+        self.data.append({'x': float(x), 'y': float(y)})
+
     def init_connection(self):
-        self.client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        self.client.connect((self.HOST,self.PORT))
-        
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client.connect((self.HOST, self.PORT))
+
     def send_data(self):
         self.log_file_name = self.get_script_path()
         try:
-            self.client.send((json.dumps(self.data)+'\n').encode())
+            self.client.send((json.dumps({
+                'type': 0,
+                'data': self.data,
+            })+'\n').encode())
             self.start_logging = True
         except ConnectionResetError:
             self.init_connection()
 
+    def send_movement(self, direction):
+        angular = {
+            'turn_right': -self.angular_speed,
+            'turn_left': self.angular_speed,
+            'forward': 0,
+            'backward': 0,
+            'stop':0,
+        }
+        linear = {
+            'turn_right': 0,
+            'turn_left': 0,
+            'forward': self.linear_speed,
+            'backward': -self.linear_speed,
+            'stop':0
+        }
+        payload = {
+            'type': 1,
+            'data': {
+                'lin_speed': linear.get(direction),
+                'ang_speed': angular.get(direction),
+            }
+        }
+        self.client.send((json.dumps(payload)+'\n').encode())
+
+    def send_reset(self):
+        self.client.send((json.dumps({'type':2})+'\n').encode())
+
     def get_script_path(self):
-        path = os.path.dirname(os.path.realpath(sys.argv[0]))+f'/log/{time()}.txt'
+        path = os.path.dirname(os.path.realpath(
+            sys.argv[0]))+f'/log/{time()}.txt'
         if not os.path.exists(os.path.dirname(path)):
             try:
                 os.makedirs(os.path.dirname(path))
@@ -41,7 +75,7 @@ class Ws(QThread):
                 if exc.errno != errno.EEXIST:
                     raise
         return path
-    
+
     def stop_logging(self):
         self.start_logging = False
 
@@ -49,16 +83,21 @@ class Ws(QThread):
         print(self.get_script_path())
         self.init_connection()
         while True:
-            if self.start_logging:
-                msg = self.client.recv(150)
-                msg = msg.decode('utf-8')
-                try:
-                    obj = json.loads(msg)
-                    odomdata = odomdata_from_dict(obj)
-                    self.robot_position.emit(odomdata)
-                    f = open(self.log_file_name, 'a')
-                    f.write(f'{time()},'+f'{odomdata.sc},{odomdata.data.x},{odomdata.data.y},{odomdata.data.w}'+'\n')
-                    f.close()
-                except Exception as e:
-                    # print(e)
-                    pass
+            msg = self.client.recv(150)
+            msg = msg.decode('utf-8')
+            print(msg)
+            # if self.start_logging:
+            #     msg = self.client.recv(150)
+            #     msg = msg.decode('utf-8')
+            #     print(msg)
+                # try:
+                #     obj = json.loads(msg)
+                #     odomdata = odomdata_from_dict(obj)
+                #     self.robot_position.emit(odomdata)
+                #     f = open(self.log_file_name, 'a')
+                #     f.write(
+                #         f'{time()},'+f'{odomdata.sc},{odomdata.data.x},{odomdata.data.y},{odomdata.data.w}'+'\n')
+                #     f.close()
+                # except Exception as e:
+                #     # print(e)
+                #     pass

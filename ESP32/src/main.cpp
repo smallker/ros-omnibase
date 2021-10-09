@@ -186,15 +186,10 @@ void moveBase(void *parameters)
 {
   for (;;)
   {
-    if (WiFi.softAPgetStationNum() > 0 && (millis() - last_command_time < 500))
-    {
-      float lin_x = vel_data.linear.y;
-      float lin_y = vel_data.linear.x;
-      float ang_z = -1 * vel_data.angular.z;
-      base.setSpeed(lin_x, lin_y, ang_z);
-    }
-    else
-      base.setSpeed(0, 0, 0);
+    float lin_x = 0;
+    float lin_y = base_speed.y_speed;
+    float ang_z = base_speed.w_speed;
+    base.setSpeed(lin_x, lin_y, ang_z);
     vTaskDelay(10);
   }
 }
@@ -210,7 +205,9 @@ void countRpm(void *parameters)
   {
     m1.calculateRpm(sampling_time_ms);
     m2.calculateRpm(sampling_time_ms);
-    base.calculatePosition(heading);
+    base.calculatePosition(base.w);
+    // DEBUG.println(m1.rpm_abs);
+    DEBUG.printf("m1 : %d m2 : %d\n", m1.encoder_tick_acc, m2.encoder_tick_acc);
     // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
     // DEBUG.printf("m1 : %.3f m2 : %.3f\n", m1.speed_ms, m2.speed_ms);
     vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
@@ -281,11 +278,11 @@ void initWebSocket(void *parameters)
       break;
   }
 #endif
-
+  vTaskDelay(3000); 
   WiFiServer wifiServer(80);
   wifiServer.begin();
   DEBUG.println("WS server begin");
-  unsigned long millis_server;
+  unsigned long millis_server = millis();
   for (;;)
   {
     WiFiClient client = wifiServer.available();
@@ -293,32 +290,86 @@ void initWebSocket(void *parameters)
     {
       while (client.connected())
       {
-        if(millis() - millis_server > 1000){
-          client.print(millis());
+        if (millis() - millis_server > 500)
+        {
+          StaticJsonDocument<200> doc;
+
+          doc["type"] = 1;
+          doc["sc"] = "en";
+
+          JsonObject data = doc.createNestedObject("data");
+          data["x"] = base.x;
+          data["y"] = base.y;
+          data["w"] = (base.w) * 180/PI;
+          String buffer;
+          serializeJson(doc, buffer);
+          // Serial.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
+          // client.println(buffer);
+          // client.printf("%.2f,%.2f", base.x + rand() % 100, base.y + rand() % 100);
+          client.printf("m1 : %d m2 : %d", m1.encoder_tick_acc, m2.encoder_tick_acc);
           millis_server = millis();
         }
+
         while (client.available() > 0)
         {
           String c = client.readStringUntil('\n');
-          DEBUG.println(c);
-          StaticJsonDocument<1000> doc;
+          // DEBUG.println(c);
+          // String input;
+
+          StaticJsonDocument<500> doc;
+
           DeserializationError error = deserializeJson(doc, c);
+
           if (error)
           {
             Serial.print(F("deserializeJson() failed: "));
             Serial.println(error.f_str());
             return;
           }
-          markers.points_length = 0;
-          for (JsonObject item : doc.as<JsonArray>())
+          /*
+            data type
+            0 = setpoint
+            1 = speed
+            2 = reset
+          */
+          int type = doc["type"];
+          if (type == 0)
           {
-            float x = item["x"];
-            float y = item["y"];
-            markers.points_length++;
-            markers.markers_x.push_back(x);
-            markers.markers_y.push_back(y);
+            for (JsonObject data_item : doc["data"].as<JsonArray>())
+            {
+              float data_item_x = data_item["x"]; // 3.3, 3.3, 3.3, 3.3, 3.3, 3.3
+              float data_item_y = data_item["y"]; // 3.1, 3.1, 3.1, 3.1, 3.1, 3.1
+              markers.points_length++;
+              markers.markers_x.push_back(data_item_x);
+              markers.markers_y.push_back(data_item_y);
+              DEBUG.printf("x => %.2f , y => %.2f\n", data_item_x, data_item_y);
+            }
+            finish = false;
           }
-          finish = false;
+
+          if (type == 1)
+          {
+            float data_lin_speed = doc["data"]["lin_speed"]; // 
+            float data_ang_speed = doc["data"]["ang_speed"]; // 0.5
+            base_speed.y_speed = data_lin_speed;
+            base_speed.w_speed = data_ang_speed;
+            // DEBUG.printf("lin : %.2f  ang : %.2f\n", data_lin_speed, data_ang_speed);
+            // last_command_time = millis();
+          }
+          if (type == 2){
+            base_speed.x_speed = 0;
+            base_speed.y_speed = 0;
+            base_speed.w_speed = 0;
+            base.x = 0;
+            base.y = 0;
+            base.w = 0;
+            m1.encoder_tick_acc = 0;
+            m2.encoder_tick_acc = 0;
+            finish = true;
+            goal_x.reset();
+            goal_y.reset();
+            goal_w.reset();
+          }
         }
         vTaskDelay(1);
       }
@@ -360,10 +411,10 @@ void setup()
   xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);             // Test apakah RTOS dapat berjalan
   xTaskCreatePinnedToCore(initWebSocket, "node", 10000, NULL, 5, &websocket_task, 0); // Inisialisasi ros node
   // xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);           // Task publish ros messsage
-  xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);               // Membaca sensor kompas
-  xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);                    // Menggerakkan base robot
-  xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);                       // Menghitung RPM
-  xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);             // Set data untuk message MotorEncoder
+  xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);   // Membaca sensor kompas
+  xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);        // Menggerakkan base robot
+  xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);           // Menghitung RPM
+  xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1); // Set data untuk message MotorEncoder
   // xTaskCreatePinnedToCore(poseControl, "pose control", 10000, NULL, 2, &pose_control_task, 1); // Set data untuk message MotorEncoder
 }
 

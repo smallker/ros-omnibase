@@ -66,8 +66,8 @@ volatile bool finish;
 volatile int marker_array_position;
 
 // inisialisasi objek motor
-Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B);
-Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B);
+Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B, 405);
+Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B, 351);
 Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
 
 // inisialisasi objek kinematik
@@ -85,5 +85,11 @@ struct Markers
     int points_length;
 } markers;
 
+struct BaseSpeed
+{
+    float x_speed;
+    float y_speed;
+    float w_speed;
+} base_speed;
 // Websocket control flow
 volatile bool ws_ready;

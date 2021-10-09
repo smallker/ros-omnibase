@@ -2,10 +2,9 @@
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#define SSID "Telkom IoT"
-#define PASS "0987654321"
-
-// #define AP
+// #define SSID "Telkom IoT"
+// #define PASS "0987654321"
+#define AP
 
 int relayPin = 23;
 void wifiSetup(void *parameters)
@@ -15,9 +14,13 @@ void wifiSetup(void *parameters)
     IPAddress gateway(192, 168, 43, 44);
     IPAddress subnet(255, 255, 255, 0);
 #ifdef AP
+#define SSID "openbase"
+#define PASS "openbase"
     WiFi.softAP(SSID, PASS);
     WiFi.softAPConfig(local_ip, gateway, subnet);
 #else
+#define SSID "Telkom IoT"
+#define PASS "0987654321"
     WiFi.config(local_ip, gateway, subnet);
     WiFi.mode(WIFI_STA);
     WiFi.begin(SSID, PASS);
@@ -62,6 +65,6 @@ void wifiSetup(void *parameters)
     for (;;)
     {
         // ArduinoOTA.handle();
-       vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }

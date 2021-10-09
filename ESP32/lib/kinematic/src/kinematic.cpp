@@ -33,8 +33,7 @@ void Kinematic::setSpeed(float linear_x, float linear_y, float linear_z, float a
     }
     if (base == BASE_DIFF_DRIVE)
     {
-        m1->speed(linear_y);
-        m2->speed(linear_y);
+
     }
 }
 
@@ -42,8 +41,13 @@ void Kinematic::setSpeed(float lin_x, float lin_y, float ang_z)
 {
     if (base == BASE_DIFF_DRIVE)
     {
-        m1->speed(lin_y);
-        m2->speed(lin_y);
+        float inv_m1 = lin_y - (0.2 * ang_z);
+        float inv_m2 = -1 * (lin_y + (0.2 * ang_z));
+        float sp_m1 = (inv_m1 / (PI * d_wheel)) * 60;
+        float sp_m2 = (inv_m2 / (PI * d_wheel)) * 60;
+        m1->speed(sp_m1);
+        m2->speed(sp_m2);
+        // Serial.printf("m1 : %.2f m2 : %.2f\n", sp_m1, sp_m2);
     }
 
     if (base == BASE_OMNI_Y)
@@ -64,7 +68,18 @@ void Kinematic::calculatePosition(float heading)
 {
     if (base == BASE_DIFF_DRIVE)
     {
+        heading = ((heading * 180 / PI) + 90) * PI / 180;
+        float leftTravel = m1->speed_ms;
+        float rightTravel = m2->speed_ms * -1;
+        float deltaTravel = (rightTravel + leftTravel) / 2;
+        float deltaTheta = (rightTravel - leftTravel) / (this->r_base * 2);
+        float deltaX = deltaTravel * cos(heading);
+        float deltaY = deltaTravel * sin(heading);
+        w += deltaTheta;
+        x += deltaX;
+        y += deltaY;
     }
+
     if (base == BASE_OMNI_Y)
     {
         float v1 = (m1->speed_ms);
