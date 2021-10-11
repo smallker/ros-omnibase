@@ -1,3 +1,4 @@
+from enum import Enum
 from math import atan2, pi, sqrt
 
 from openbase.pid import Pid
@@ -8,60 +9,66 @@ from tf.transformations import euler_from_quaternion
 from visualization_msgs.msg import Marker
 
 
+class Mode(Enum):
+    DIRECT = 0
+    PIVOT = 1
+
+
 class NodeAutoDiffdrive:
     lin_pid = Pid(kp=0.3, ki=0, kd=1)
     ang_pid = Pid(kp=0.3, ki=0, kd=1)
     pose: Pose2D = Pose2D()
     pose_control_started = False
+    marker_array_pos = 0
     marker: Marker = Marker()
     twist = Twist()
+    mode = Mode.DIRECT
 
     def get_distance_goal_and_heading(self, goal_x, goal_y, pose_x, pose_y, ):
         diff_x = goal_x - pose_x
         diff_y = goal_y - pose_y
-        goal_distance = sqrt((diff_y ** 2) + (diff_x **2))
-        goal_heading = atan2(diff_y, diff_x)
+        goal_distance = sqrt((diff_y ** 2) + (diff_x ** 2))
+        goal_heading = atan2(diff_x, diff_y)
         return goal_distance, goal_heading
 
     def on_marker_set(self, msg: Marker):
         self.marker = msg
 
     def on_robot_pose(self, pose: Pose2D):
+        if self.mode == Mode.DIRECT:
+            self.direct_mode(pose)
 
-        if self.pose_control_started:
-            goal_x = self.marker.points[1].x
-            goal_y = self.marker.points[1].y
+    def direct_mode(self, pose: Pose2D):
+        if self.pose_control_started and self.marker_array_pos < self.marker.points.__len__():
+            goal_x = self.marker.points[self.marker_array_pos].x
+            goal_y = self.marker.points[self.marker_array_pos].y
             distance, heading = self.get_distance_goal_and_heading(
-                 goal_y, goal_x, pose.y, pose.x)
+                goal_x, goal_y, pose.x, pose.y,)
             self.lin_pid.pos = distance
             self.ang_pid.sp = - heading
             self.ang_pid.pos = pose.theta
             self.twist.linear.x = self.lin_pid.compute_from_err(distance)
-            self.twist.angular.z = self.ang_pid.pid()
-            if abs(self.lin_pid.sp - self.lin_pid.pos) <0.01 and abs(self.ang_pid.sp - self.ang_pid.pos) < 0.01:
-                self.pose_control_started = False
-                rospy.Publisher('/log', String, queue_size=1).publish('FINISH')
+            self.twist.angular.z = self.ang_pid.compute()
+            if abs(self.lin_pid.sp - self.lin_pid.pos) < 0.01 and abs(self.ang_pid.sp - self.ang_pid.pos) < 0.01:
                 self.twist.linear.x = 0
                 self.twist.angular.z = 0
+                self.marker_array_pos += 1
             self.cmd_vel.publish(self.twist)
 
-    def __reset(self, msg):
-        self.pose_control_started = False
+    def __reset(self, _):
         self.ang_pid.reset_err()
         self.lin_pid.reset_err()
+        self.pose_control_started = False
+        self.marker_array_pos = 0
 
-    def on_marker_follower(self, msg):
+    def on_marker_follower(self, _):
         rospy.loginfo('ON MARKER FOLLOWER CALLED')
-        goal_x = self.marker.points[1].x
-        goal_y = self.marker.points[1].y
-        goal_distance, goal_heading = self.get_distance_goal_and_heading(
-            goal_y, goal_x, 0, 0, )
-        self.lin_pid.sp = goal_distance
-        self.ang_pid.sp = - goal_heading
-        rospy.loginfo(f'{goal_x} , {goal_y}')
         self.pose_control_started = True
-        rospy.loginfo(f'{self.lin_pid.sp} {self.ang_pid.sp}')
-        rospy.loginfo(self.marker.points)
+        self.mode = Mode.DIRECT
+
+    def on_pivot_mode(self, _):
+        rospy.loginfo('ON PIVOT MODE CALLED')
+        self.mode = Mode.PIVOT
 
     def __init__(self) -> None:
         rospy.init_node('node_autonomous', anonymous=True)

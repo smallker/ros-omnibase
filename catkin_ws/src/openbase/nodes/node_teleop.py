@@ -196,12 +196,14 @@ if __name__=="__main__":
         print(vels(speed,turn))
         while(1):
             key = getKey()
-            if key == '3':
-                rospy.Publisher(f'/reset_pos', Empty, queue_size=1).publish()
-                rospy.loginfo('RESET POSITION')
+            if key == '1':
+                rospy.Publisher(f'/pivot_mode', Empty, queue_size=1).publish()
             if key == '2':
                 rospy.Publisher('/marker_follower', Empty, queue_size=1).publish()
                 rospy.loginfo('START MARKER FOLLOWER')
+            if key == '3':
+                rospy.Publisher(f'/reset_pos', Empty, queue_size=1).publish()
+                rospy.loginfo('RESET POSITION')
             if key in moveBindings.keys():
                 x = moveBindings[key][0]
                 y = moveBindings[key][1]

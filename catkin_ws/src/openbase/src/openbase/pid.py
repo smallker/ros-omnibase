@@ -10,7 +10,7 @@ class Pid:
         self.ki = ki
         self.kd = kd
 
-    def pid(self) -> float:
+    def compute(self) -> float:
         if abs(self.i_err) > self.windup:
             self.i_err = 0
         err = self.sp - self.pos
