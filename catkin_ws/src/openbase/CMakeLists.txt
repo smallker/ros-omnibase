@@ -39,6 +39,7 @@ catkin_install_python(PROGRAMS
    nodes/node_robot_mock.py
    nodes/node_teleop.py
    nodes/node_autonomous.py
+   nodes/node_auto_diff_drive.py
    nodes/node_imu.py
    nodes/node_marker.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

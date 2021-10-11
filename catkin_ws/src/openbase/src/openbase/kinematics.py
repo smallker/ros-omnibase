@@ -46,8 +46,8 @@ class DifferentialDrive(Kinematics):
     def set_speed(self, speed: Twist, heading: float):
         # Koreksi heading
         heading = (((heading * 180/math.pi)+90)) * math.pi/180
-        leftTravel = (speed.linear.x - (speed.angular.z * 0.1))/ (1/self.sampling_time)
-        rightTravel = (speed.linear.x + (speed.angular.z * 0.1)) / (1/self.sampling_time)
+        leftTravel = (speed.linear.x - (speed.angular.z * 0.3))/ (1/self.sampling_time)
+        rightTravel = (speed.linear.x + (speed.angular.z * 0.3)) / (1/self.sampling_time)
         deltaTravel = (rightTravel + leftTravel) / 2
         deltaTheta = (rightTravel - leftTravel) / (self.base_wheel)
         deltaX = deltaTravel * math.cos(heading)
