@@ -25,8 +25,8 @@
 // kode EN untuk pin encoder
 #define EN1_A 35
 #define EN1_B 26
-#define EN2_A 34
-#define EN2_B 27
+#define EN2_A 27
+#define EN2_B 34
 #define EN3_A 39
 #define EN3_B 13
 
@@ -37,7 +37,7 @@ portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 // Task handle untuk RTOS
 TaskHandle_t wifi_task;
 TaskHandle_t blink_task;
-TaskHandle_t websocket_task;
+TaskHandle_t node_handle_task;
 TaskHandle_t ros_pub;
 TaskHandle_t cmp_task;
 TaskHandle_t motor_task;
@@ -56,26 +56,28 @@ void countRpm(void *parameters);
 void odometry(void *parameters);
 void poseControl(void *parameters);
 
+// Helper function
+void directMode(void);
+void pivotMode(void);
 // primitive global variable
 volatile int heading;
 volatile int sp_heading;
 volatile int last_compass_reading;
 volatile bool is_ros_ready, pose_control_begin;
 volatile unsigned long last_command_time;
-volatile bool finish;
+volatile bool pose_control_started;
 volatile int marker_array_position;
 
 // inisialisasi objek motor
-Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B, 405);
-Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B, 351);
-Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
+Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B, 640);
+Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B, 837);
+// Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
 
 // inisialisasi objek kinematik
 Kinematic base(BASE_DIFF_DRIVE);
 
-Pid goal_x = Pid(5, 0, 1);
-Pid goal_y = Pid(5, 0, 1);
-Pid goal_w = Pid(7, 0, 0);
+Pid lin_pid = Pid(0.2, 0, 1);
+Pid ang_pid = Pid(0.8, 0, 1);
 
 // Array marker
 struct Markers
@@ -91,5 +93,9 @@ struct BaseSpeed
     float y_speed;
     float w_speed;
 } base_speed;
+
 // Websocket control flow
 volatile bool ws_ready;
+
+// Either direct or pivot mode
+volatile Mode mode;

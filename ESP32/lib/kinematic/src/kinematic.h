@@ -11,6 +11,12 @@ enum Base {
     BASE_MECHANUM
 };
 
+// Robot movement mode
+enum Mode{
+    DIRECT,
+    PIVOT,
+};
+
 class Kinematic
 {
 private:
@@ -20,7 +26,7 @@ private:
     double sqrt3 = 1.732050807568877193176604123436845839023590087890625;
     float d_wheel = 0.065;
 public:
-    float x, y, w;
+    volatile float x, y, w;
     Kinematic(Base base);
     void setMotor(Motor &m1, Motor &m2);
     void setMotor(Motor &m1, Motor &m2, Motor &m3);
@@ -28,6 +34,8 @@ public:
     void setSpeed(float linear_x, float linear_y, float linear_z, float angular_x, float angular_y, float angular_z);
     void setSpeed(float linear_x, float linear_y, float angular_z);
     void calculatePosition(float heading_rad);
+    float getGoalDistance(float goal_x, float goal_y);
+    float getGoalHeading(float goal_x, float goal_y);
 };
 
 #endif

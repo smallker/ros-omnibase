@@ -13,12 +13,12 @@ void ICACHE_RAM_ATTR EN2_ISR()
   portEXIT_CRITICAL(&mux);
 }
 
-void ICACHE_RAM_ATTR EN3_ISR()
-{
-  portENTER_CRITICAL(&mux);
-  m3.isrHandler();
-  portEXIT_CRITICAL(&mux);
-}
+// void ICACHE_RAM_ATTR EN3_ISR()
+// {
+//   portENTER_CRITICAL(&mux);
+//   m3.isrHandler();
+//   portEXIT_CRITICAL(&mux);
+// }
 
 void onCmdVel(const geometry_msgs::Twist &msg_data)
 {
@@ -31,24 +31,21 @@ void onResetPose(const std_msgs::Empty &msg_data)
 {
   m1.encoder_tick_acc = 0;
   m2.encoder_tick_acc = 0;
-  m3.encoder_tick_acc = 0;
   heading = 0;
   base.x = 0;
   base.y = 0;
-  goal_x.setpoint = 0;
-  goal_y.setpoint = 0;
-  goal_w.setpoint = 0;
-  goal_x.reset();
-  goal_y.reset();
-  goal_w.reset();
-  pose_control_begin = false;
+  base.w = 0;
+  lin_pid.setpoint = 0;
+  ang_pid.setpoint = 0;
+  lin_pid.reset();
+  ang_pid.reset();
+  pose_control_started = false;
 }
 
 void onMoveBaseToGoal(const geometry_msgs::PoseStamped &msg_data)
 {
-  goal_x.setpoint = msg_data.pose.position.x;
-  goal_y.setpoint = msg_data.pose.position.y;
-  goal_w.setpoint = 0;
+  lin_pid.setpoint = msg_data.pose.position.x;
+  ang_pid.setpoint = msg_data.pose.position.y;
   pose_control_begin = true;
 }
 
@@ -57,10 +54,12 @@ void onMarkerSet(const visualization_msgs::Marker &msg_data)
   marker_data = msg_data;
 }
 
-void onMarkerFollower(const std_msgs::Empty &msg_data)
+void onPivotMode(const std_msgs::Empty &msg_data)
 {
   DEBUG.println("MARKER FOLLOWER STARTED");
-  finish = false;
+  mode = PIVOT;
+  marker_array_position = 0;
+  pose_control_started = true;
   for (int i = 0; i < marker_data.points_length; i++)
   {
     DEBUG.printf("X : %.f Y : %.f Z : %.f\n", marker_data.points[i].x, marker_data.points[i].y, marker_data.points[i].z);
@@ -102,10 +101,10 @@ void initNode(void *parameters)
       nh.initNode();
       nh.subscribe(vel_sub);
       nh.subscribe(rst_pos_sub);
-      // nh.subscribe(goal_sub);
+      nh.subscribe(pivot_mode_sub);
       nh.subscribe(marker_sub);
-      nh.subscribe(marker_follower_sub);
       nh.advertise(pose_pub);
+      // nh.advertise(heading_pub);
       heading = 0;
     }
     if (rosClient.connected() == 1)
@@ -127,6 +126,15 @@ void publishMessage(void *parameter)
   {
     if (rosClient.connected() == 1)
     {
+      // ambil data kompas dan heading odom
+      // char buffer[30];
+      // int heading_odom = base.w * 180 / PI;
+      // float left_wheel = m1.encoder_tick_acc / m1.ppr * 0.24;
+      // float right_wheel = m2.encoder_tick_acc / m2.ppr * 0.24;
+      // sprintf(buffer, "%.2f,%.2f,%d,%d,", left_wheel, right_wheel, heading, heading_odom);
+      // heading_str_data.data = buffer;
+      // heading_pub.publish(&heading_str_data);
+
       is_ros_ready = true;
       pose_pub.publish(&pose_data);
     }
@@ -144,7 +152,8 @@ void readCompass(void *parameters)
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   QMC5883LCompass compass;
   compass.init();
-  compass.setCalibration(-1112, 1340, -1485, 966, -950, 0);
+  compass.setCalibration(-1711, 452, -930, 1073, -1881, 0);
+  // compass.setCalibration(-1112, 1340, -1485, 966, -950, 0);
   compass.read();
   last_compass_reading = compass.getAzimuth();
   heading = last_compass_reading;
@@ -186,10 +195,19 @@ void moveBase(void *parameters)
 {
   for (;;)
   {
-    float lin_x = 0;
-    float lin_y = base_speed.y_speed;
-    float ang_z = base_speed.w_speed;
-    base.setSpeed(lin_x, lin_y, ang_z);
+    if (millis() - last_command_time < 500)
+    {
+      float lin_x = vel_data.linear.y;
+      float lin_y = vel_data.linear.x;
+      float ang_z = vel_data.angular.z;
+      base.setSpeed(lin_x, lin_y, ang_z);
+      // DEBUG.printf("lin_x : %.2f, lin_y : %.2f, ang_z : %.2f\n", lin_x, lin_y, ang_z);
+    }
+    else
+    {
+      base.setSpeed(0, 0, 0);
+      // DEBUG.println("STOPPED");
+    }
     vTaskDelay(10);
   }
 }
@@ -201,15 +219,23 @@ void moveBase(void *parameters)
 void countRpm(void *parameters)
 {
   const int sampling_time_ms = 5;
+  // unsigned long delay_printf = millis();
   for (;;)
   {
     m1.calculateRpm(sampling_time_ms);
     m2.calculateRpm(sampling_time_ms);
+    // m1.speed_ms = 0.001;
+    // m2.speed_ms = 0.001;
     base.calculatePosition(base.w);
-    // DEBUG.println(m1.rpm_abs);
-    DEBUG.printf("m1 : %d m2 : %d\n", m1.encoder_tick_acc, m2.encoder_tick_acc);
-    // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
+    // if (millis() - delay_printf > 100)
+    // {
+    //   // DEBUG.printf("m1 : %d m2 : %d\n", m1.encoder_tick_acc, m2.encoder_tick_acc);
+    //   // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
+    //   delay_printf = millis();
+    // }
     // DEBUG.printf("m1 : %.3f m2 : %.3f\n", m1.speed_ms, m2.speed_ms);
+
+    // DEBUG.println(m1.rpm_abs);
     vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
   }
 }
@@ -223,9 +249,12 @@ void odometry(void *parameters)
 {
   for (;;)
   {
+    // pose_data.x = m1.encoder_tick_acc;
+    // pose_data.y = m2.encoder_tick_acc;
     pose_data.x = base.x;
     pose_data.y = base.y;
     pose_data.theta = base.w;
+    // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
 }
@@ -240,32 +269,58 @@ void poseControl(void *parameters)
 {
   for (;;)
   {
-    if (!finish)
+    if (mode == DIRECT)
+      directMode();
+    if (mode == PIVOT)
+      pivotMode();
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+  }
+}
+
+void directMode()
+{
+  if (pose_control_started == true && (marker_array_position < marker_data.points_length))
+  {
+    float goal_x = marker_data.points[marker_array_position].x;
+    float goal_y = marker_data.points[marker_array_position].y;
+    float goal_distance = base.getGoalDistance(goal_x, goal_y);
+    float goal_heading = base.getGoalHeading(goal_x, goal_y);
+    lin_pid.pos = goal_distance;
+    ang_pid.setpoint = -goal_heading;
+    ang_pid.pos = base.w;
+
+    float linear = lin_pid.compute_from_err(goal_distance);
+    float angular = ang_pid.compute();
+    if (abs(lin_pid.setpoint - lin_pid.pos) < 0.01 && abs(ang_pid.setpoint - ang_pid.pos) < 0.1)
     {
-      float lin_x = goal_x.compute(base.x);
-      float lin_y = goal_y.compute(base.y);
-      float ang_z = goal_w.compute(base.w);
-      base.setSpeed(-lin_x, lin_y, -ang_z);
-      vTaskDelay(10 / portTICK_PERIOD_MS);
+      linear = 0;
+      angular = 0;
+      mode = PIVOT;
+      marker_array_position++;
+      DEBUG.println("CHANGE TO PIVOT MODE");
     }
-    if (abs(goal_x.setpoint - base.x) < 0.01 and abs(goal_y.setpoint - base.y) < 0.01 and abs(goal_w.setpoint - base.w) < 0.01)
+    base.setSpeed(0, linear, angular);
+  }
+}
+
+void pivotMode()
+{
+  if (pose_control_started && (marker_array_position < marker_data.points_length))
+  {
+    float goal_x = marker_data.points[marker_array_position].x;
+    float goal_y = marker_data.points[marker_array_position].y;
+    float goal_distance = base.getGoalDistance(goal_x, goal_y);
+    float goal_heading = base.getGoalHeading(goal_x, goal_y);
+    lin_pid.pos = goal_distance;
+    ang_pid.setpoint = -goal_heading;
+    ang_pid.pos = base.w;
+    DEBUG.printf("dist : %.2f head : %.2f\n", goal_distance, goal_heading);
+    float angular = ang_pid.compute();
+    if (abs(ang_pid.setpoint - ang_pid.pos) < 0.1)
     {
-      if (marker_array_position < markers.points_length)
-      {
-        goal_x.reset();
-        goal_y.reset();
-        goal_w.reset();
-        goal_x.setpoint = markers.markers_x.at(marker_array_position);
-        goal_y.setpoint = markers.markers_y.at(marker_array_position);
-        goal_w.setpoint = 0;
-        marker_array_position++;
-      }
-      else
-      {
-        finish = true;
-        marker_array_position = 0;
-      }
+      mode = DIRECT;
     }
+    base.setSpeed(0, 0, angular);
   }
 }
 
@@ -278,7 +333,7 @@ void initWebSocket(void *parameters)
       break;
   }
 #endif
-  vTaskDelay(3000); 
+  vTaskDelay(3000);
   WiFiServer wifiServer(80);
   wifiServer.begin();
   DEBUG.println("WS server begin");
@@ -300,13 +355,13 @@ void initWebSocket(void *parameters)
           JsonObject data = doc.createNestedObject("data");
           data["x"] = base.x;
           data["y"] = base.y;
-          data["w"] = (base.w) * 180/PI;
+          data["w"] = (base.w) * 180 / PI;
           String buffer;
           serializeJson(doc, buffer);
           // Serial.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
           // client.println(buffer);
           // client.printf("%.2f,%.2f", base.x + rand() % 100, base.y + rand() % 100);
-          client.printf("m1 : %d m2 : %d", m1.encoder_tick_acc, m2.encoder_tick_acc);
+          // client.printf("m1 : %d m2 : %d", m1.encoder_tick_acc, m2.encoder_tick_acc);
           millis_server = millis();
         }
 
@@ -344,19 +399,20 @@ void initWebSocket(void *parameters)
               markers.markers_y.push_back(data_item_y);
               DEBUG.printf("x => %.2f , y => %.2f\n", data_item_x, data_item_y);
             }
-            finish = false;
+            pose_control_started = true;
           }
 
           if (type == 1)
           {
-            float data_lin_speed = doc["data"]["lin_speed"]; // 
+            float data_lin_speed = doc["data"]["lin_speed"]; //
             float data_ang_speed = doc["data"]["ang_speed"]; // 0.5
             base_speed.y_speed = data_lin_speed;
             base_speed.w_speed = data_ang_speed;
             // DEBUG.printf("lin : %.2f  ang : %.2f\n", data_lin_speed, data_ang_speed);
             // last_command_time = millis();
           }
-          if (type == 2){
+          if (type == 2)
+          {
             base_speed.x_speed = 0;
             base_speed.y_speed = 0;
             base_speed.w_speed = 0;
@@ -365,10 +421,9 @@ void initWebSocket(void *parameters)
             base.w = 0;
             m1.encoder_tick_acc = 0;
             m2.encoder_tick_acc = 0;
-            finish = true;
-            goal_x.reset();
-            goal_y.reset();
-            goal_w.reset();
+            pose_control_started = true;
+            lin_pid.reset();
+            ang_pid.reset();
           }
         }
         vTaskDelay(1);
@@ -397,9 +452,9 @@ void setup()
   analogWriteFrequency(10000);
   attachInterrupt(digitalPinToInterrupt(m1.en_a), EN1_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m2.en_a), EN2_ISR, FALLING);
-  attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
-  m1.pid(7, 0.05, 1, 255);
-  m2.pid(7, 0.05, 1, 255);
+  // attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
+  m1.pid(7, 0, 1, 255);
+  m2.pid(9, 0, 1, 255);
   base.setMotor(m1, m2);
   // Spawn task RTOS
   // xTaskCreatePinnedToCore(fungsi, "nama fungsi", alokasi memori, prioritas, task handle, core);
@@ -407,15 +462,16 @@ void setup()
   // Sebisa mungkin prioritas task disamakan untuk menghindari crash
   // Task yang paling sering dijalankan diberikan prioritas paling tinggi
   // sem_i2c = xSemaphoreCreateMutex();
-  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);    // Pengaturan akses poin
-  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);             // Test apakah RTOS dapat berjalan
-  xTaskCreatePinnedToCore(initWebSocket, "node", 10000, NULL, 5, &websocket_task, 0); // Inisialisasi ros node
-  // xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);           // Task publish ros messsage
-  xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);   // Membaca sensor kompas
-  xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);        // Menggerakkan base robot
-  xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);           // Menghitung RPM
-  xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1); // Set data untuk message MotorEncoder
-  // xTaskCreatePinnedToCore(poseControl, "pose control", 10000, NULL, 2, &pose_control_task, 1); // Set data untuk message MotorEncoder
+  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);
+  xTaskCreatePinnedToCore(initNode, "node", 10000, NULL, 5, &node_handle_task, 0); // Inisialisasi ros node
+  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);          // Test apakah RTOS dapat berjalan
+  // xTaskCreatePinnedToCore(initWebSocket, "node", 10000, NULL, 5, &websocket_task, 0); // Inisialisasi ros node
+  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);           // Task publish ros messsage
+  xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);               // Membaca sensor kompas
+  xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);                    // Menggerakkan base robot
+  xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);                       // Menghitung RPM
+  xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);             // Set data untuk message MotorEncoder
+  xTaskCreatePinnedToCore(poseControl, "pose control", 10000, NULL, 2, &pose_control_task, 1); // Set data untuk message MotorEncoder
 }
 
 void loop()

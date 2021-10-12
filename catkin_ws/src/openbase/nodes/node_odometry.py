@@ -1,15 +1,22 @@
 #! /usr/bin/python3
 from __future__ import division
+from math import pi
 
 import rospy
-from std_msgs.msg import Empty
+from std_msgs.msg import Empty, String
 from nav_msgs.msg import Odometry
 from tf.broadcaster import TransformBroadcaster
 from tf.transformations import quaternion_from_euler
 from geometry_msgs.msg import Pose2D, Point
 from visualization_msgs.msg import Marker
+from time import time
+
 class OdometryNode:
     seq = 0
+
+    def on_robot_heading(self, msg:String):
+        rospy.loginfo(msg.data)
+
     def main(self):
         rospy.init_node('node_odometry', anonymous=True)
         self.tf_pub = TransformBroadcaster()
@@ -18,6 +25,7 @@ class OdometryNode:
         self.odom_frame_id = rospy.get_param('~odom_frame_id')
         self.odom_pub = rospy.Publisher(f'/{self.base_frame_id}/odom', Odometry, queue_size=10)
         self.marker_pub = rospy.Publisher(f'/{self.base_frame_id}/marker', Marker, queue_size=10)
+        rospy.Subscriber(f'/{self.base_frame_id}/heading_str_data',String, self.on_robot_heading)
         rospy.Subscriber(f'/{self.base_frame_id}/pose_data', Pose2D, self.on_pose_data)
         rospy.Subscriber('/reset_pos', Empty, self.on_reset_pos)
         rate = rospy.Rate(self.rate)
@@ -86,7 +94,7 @@ class OdometryNode:
         line_point.y = pose.y
         self.marker.points.append(line_point)
         self.marker_pub.publish(self.marker)
-        rospy.loginfo(f'{pose.x},{pose.y},{pose.theta}')
+        # rospy.loginfo(f'{pose.x},{pose.y},{pose.theta * 180 / pi}')
 if __name__ == '__main__':
     try:
         rospy.loginfo('running node odom')

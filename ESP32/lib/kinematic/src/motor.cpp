@@ -215,7 +215,7 @@ void Motor::calculateRpm(int sampling_time_ms)
 #endif
     rpm = (encoder_tick / ppr) * (60000 / sampling_time_ms);
     rpm_abs = abs(rpm);
-    speed_ms = (PI * d_wheel/2) / 6000.000 * rpm;
+    speed_ms = (PI * d_wheel/2) / 60000.000 * rpm;
     encoder_tick = 0;
 }
 

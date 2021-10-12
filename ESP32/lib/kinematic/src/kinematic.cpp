@@ -41,8 +41,8 @@ void Kinematic::setSpeed(float lin_x, float lin_y, float ang_z)
 {
     if (base == BASE_DIFF_DRIVE)
     {
-        float inv_m1 = lin_y - (0.2 * ang_z);
-        float inv_m2 = -1 * (lin_y + (0.2 * ang_z));
+        float inv_m1 = lin_y - (0.4 * ang_z);
+        float inv_m2 = -1 * (lin_y + (0.4 * ang_z));
         float sp_m1 = (inv_m1 / (PI * d_wheel)) * 60;
         float sp_m2 = (inv_m2 / (PI * d_wheel)) * 60;
         m1->speed(sp_m1);
@@ -70,12 +70,13 @@ void Kinematic::calculatePosition(float heading)
     {
         heading = ((heading * 180 / PI) + 90) * PI / 180;
         float leftTravel = m1->speed_ms;
-        float rightTravel = m2->speed_ms * -1;
+        float rightTravel = m2->speed_ms;
         float deltaTravel = (rightTravel + leftTravel) / 2;
         float deltaTheta = (rightTravel - leftTravel) / (this->r_base * 2);
         float deltaX = deltaTravel * cos(heading);
         float deltaY = deltaTravel * sin(heading);
         w += deltaTheta;
+        // w = heading;
         x += deltaX;
         y += deltaY;
     }
@@ -91,4 +92,18 @@ void Kinematic::calculatePosition(float heading)
         x += (cos(w) * vmx) - (sin(w) * vmy);
         y += (sin(w) * vmx) + (cos(w) * vmy);
     }
+}
+
+float Kinematic::getGoalDistance(float goal_x, float goal_y){
+    float diff_x = goal_x - x;
+    float diff_y = goal_y - y;
+    float distance = sqrt((diff_y * diff_y) + (diff_x * diff_x));
+    return distance;
+}
+
+float Kinematic::getGoalHeading(float goal_x, float goal_y){
+    float diff_x = goal_x - x;
+    float diff_y = goal_y - y;
+    float goal_heading = atan2(diff_x, diff_y);
+    return goal_heading;
 }

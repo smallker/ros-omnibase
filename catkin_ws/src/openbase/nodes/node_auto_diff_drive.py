@@ -37,6 +37,8 @@ class NodeAutoDiffdrive:
     def on_robot_pose(self, pose: Pose2D):
         if self.mode == Mode.DIRECT:
             self.direct_mode(pose)
+        if self.mode == Mode.PIVOT:
+            self.pivot_mode(pose)
 
     def direct_mode(self, pose: Pose2D):
         if self.pose_control_started and self.marker_array_pos < self.marker.points.__len__():
@@ -53,6 +55,29 @@ class NodeAutoDiffdrive:
                 self.twist.linear.x = 0
                 self.twist.angular.z = 0
                 self.marker_array_pos += 1
+                self.mode = Mode.PIVOT
+                self.ang_pid.reset_err()
+                self.lin_pid.reset_err()
+            self.cmd_vel.publish(self.twist)
+
+    def pivot_mode(self, pose: Pose2D):
+        if self.pose_control_started and self.marker_array_pos < self.marker.points.__len__():
+            goal_x = self.marker.points[self.marker_array_pos].x
+            goal_y = self.marker.points[self.marker_array_pos].y
+            distance, heading = self.get_distance_goal_and_heading(
+                goal_x, goal_y, pose.x, pose.y,)
+            self.lin_pid.pos = distance
+            self.ang_pid.sp = - heading
+            self.ang_pid.pos = pose.theta
+            # self.twist.linear.x = self.lin_pid.compute_from_err(distance)
+            self.twist.angular.z = self.ang_pid.compute()
+            if abs(self.ang_pid.sp - self.ang_pid.pos) < 0.01:
+                self.twist.linear.x = 0
+                self.twist.angular.z = 0
+                # self.marker_array_pos += 1
+                self.mode = Mode.DIRECT
+                self.ang_pid.reset_err()
+                self.lin_pid.reset_err()
             self.cmd_vel.publish(self.twist)
 
     def __reset(self, _):
@@ -69,6 +94,8 @@ class NodeAutoDiffdrive:
     def on_pivot_mode(self, _):
         rospy.loginfo('ON PIVOT MODE CALLED')
         self.mode = Mode.PIVOT
+        self.marker_array_pos = 0
+        self.pose_control_started = True
 
     def __init__(self) -> None:
         rospy.init_node('node_autonomous', anonymous=True)
@@ -78,6 +105,7 @@ class NodeAutoDiffdrive:
         rospy.Subscriber('/reset_pos', Empty, self.__reset)
         rospy.Subscriber('/marker', Marker, self.on_marker_set)
         rospy.Subscriber('/marker_follower', Empty, self.on_marker_follower)
+        rospy.Subscriber('/pivot_mode', Empty, self.on_pivot_mode)
         self.cmd_vel = rospy.Publisher(
             f'/{self.base_frame_id}/cmd_vel', Twist, queue_size=1)
 

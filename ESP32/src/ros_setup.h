@@ -9,7 +9,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/Marker.h>
 #include <sensor_msgs/Imu.h>
-#define PUBLISH_DELAY_MS 50
+#define PUBLISH_DELAY_MS 125
 
 IPAddress server(192, 168, 43, 101); // IP PC yang terinstal ROS
 IPAddress ip_address;
@@ -45,6 +45,7 @@ public:
 
 // Inisialisasi variable ros message
 std_msgs::Int32 heading_data;
+std_msgs::String heading_str_data;
 geometry_msgs::Twist vel_data;
 geometry_msgs::Point pid;
 geometry_msgs::Pose2D pose_data;
@@ -54,16 +55,17 @@ ros::NodeHandle_<WiFiHardware> nh;
 
 // Inisialisasi ros publisher
 ros::Publisher pose_pub("/real/pose_data", &pose_data);
+ros::Publisher heading_pub("/real/heading_str_data", &heading_str_data);
 
 // Inisialisasi fungsi callback subscriber
 void onCmdVel(const geometry_msgs::Twist &msg_data);
 void onMoveBaseToGoal(const geometry_msgs::PoseStamped &msg_data);
 void onResetPose(const std_msgs::Empty &mgs_data);
 void onMarkerSet(const visualization_msgs::Marker &msg_data);
-void onMarkerFollower(const std_msgs::Empty &msg_data);
+// void onMarkerFollower(const std_msgs::Empty &msg_data);
+void onPivotMode(const std_msgs::Empty &msg_data);
 // Inisialisasi ros subscriber
 ros::Subscriber<geometry_msgs::Twist> vel_sub("/real/cmd_vel", onCmdVel);
-ros::Subscriber<geometry_msgs::PoseStamped> goal_sub("/move_base_simple/goal", onMoveBaseToGoal);
 ros::Subscriber<std_msgs::Empty> rst_pos_sub("/reset_pos", onResetPose);
 ros::Subscriber<visualization_msgs::Marker> marker_sub("/marker", onMarkerSet);
-ros::Subscriber<std_msgs::Empty> marker_follower_sub("/marker_follower", onMarkerFollower);
+ros::Subscriber<std_msgs::Empty> pivot_mode_sub("/pivot_mode", onPivotMode);
