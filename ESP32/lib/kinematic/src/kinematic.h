@@ -15,6 +15,7 @@ enum Base {
 enum Mode{
     DIRECT,
     PIVOT,
+    HEADING,
 };
 
 class Kinematic

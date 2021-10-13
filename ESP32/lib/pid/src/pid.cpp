@@ -9,8 +9,10 @@ Pid::Pid(float kp, float ki, float kd)
 
 float Pid::compute()
 {
-    if (i_err > windup)
+    if (i_err > windup){
         i_err = 0;
+    }
+
     float err = setpoint - pos;
     d_err = err - last_err;
     last_err = err;
@@ -27,8 +29,9 @@ float Pid::compute()
 
 float Pid::compute_from_err(float err)
 {
-    if (i_err > windup)
+    if (i_err > windup){
         i_err = 0;
+    }
     d_err = err - last_err;
     last_err = err;
     i_err = i_err + err;

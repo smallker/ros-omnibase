@@ -2,6 +2,16 @@
 #include "motor.h"
 
 /*
+    Hanya untuk pembacaan encoder
+*/
+Motor::Motor(byte en_a, byte en_b){
+    this->en_a = en_a;
+    this->en_b = en_b;
+    pinMode(this->en_a, INPUT);
+    pinMode(this->en_b, INPUT);
+}
+
+/*
     Mode tanpa encoder
     ma_pin   -> Motor A pin
     mb_pin   -> Motor B pin

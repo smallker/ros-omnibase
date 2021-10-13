@@ -14,6 +14,6 @@ private:
     float i_err;
     float d_err;
     float last_err;
-    float windup=0.1;
+    float windup = 0.05;
     float limit = 0.6;
 };

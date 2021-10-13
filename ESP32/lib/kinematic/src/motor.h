@@ -31,7 +31,7 @@ private:
     void setPwmFrequency();
     double pi = 3.14159265359;
 public:
-    float ppr = 900;
+    float ppr = 370;
     volatile float kp, ki, kd;
     volatile float correction;
     byte en_a, en_b;
@@ -40,6 +40,7 @@ public:
     volatile float speed_ms;
     volatile int encoder_tick;
     volatile long encoder_tick_acc;
+    Motor(byte en_a, byte en_b);
     Motor(byte ma_pin, byte mb_pin, byte pwm_pin);
     Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b);
     Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b, int ppr);

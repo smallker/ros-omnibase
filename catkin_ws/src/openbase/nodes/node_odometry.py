@@ -1,6 +1,5 @@
 #! /usr/bin/python3
 from __future__ import division
-from math import pi
 
 import rospy
 from std_msgs.msg import Empty, String
@@ -9,7 +8,6 @@ from tf.broadcaster import TransformBroadcaster
 from tf.transformations import quaternion_from_euler
 from geometry_msgs.msg import Pose2D, Point
 from visualization_msgs.msg import Marker
-from time import time
 
 class OdometryNode:
     seq = 0

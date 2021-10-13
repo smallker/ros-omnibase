@@ -13,12 +13,19 @@ void ICACHE_RAM_ATTR EN2_ISR()
   portEXIT_CRITICAL(&mux);
 }
 
-// void ICACHE_RAM_ATTR EN3_ISR()
-// {
-//   portENTER_CRITICAL(&mux);
-//   m3.isrHandler();
-//   portEXIT_CRITICAL(&mux);
-// }
+void ICACHE_RAM_ATTR EN_EXT1_ISR()
+{
+  portENTER_CRITICAL(&mux);
+  en_ext1.isrHandler();
+  portEXIT_CRITICAL(&mux);
+}
+
+void ICACHE_RAM_ATTR EN_EXT2_ISR()
+{
+  portENTER_CRITICAL(&mux);
+  en_ext2.isrHandler();
+  portEXIT_CRITICAL(&mux);
+}
 
 void onCmdVel(const geometry_msgs::Twist &msg_data)
 {
@@ -65,6 +72,12 @@ void onPivotMode(const std_msgs::Empty &msg_data)
     DEBUG.printf("X : %.f Y : %.f Z : %.f\n", marker_data.points[i].x, marker_data.points[i].y, marker_data.points[i].z);
   }
 }
+
+void onHeadingMode(const std_msgs::Float32 &msg_data){
+  mode = HEADING;
+  pose_control_started = true;
+  ang_pid.setpoint = msg_data.data;
+}
 /*
   LED akan berkedip setiap 300ms saat robot
   belum tersambung dan berkedip setiap 2s
@@ -103,7 +116,10 @@ void initNode(void *parameters)
       nh.subscribe(rst_pos_sub);
       nh.subscribe(pivot_mode_sub);
       nh.subscribe(marker_sub);
+      nh.subscribe(heading_mode_sub);
       nh.advertise(pose_pub);
+      nh.advertise(heading_int_pub);
+      // nh.advertise(pose_ext_pub);
       // nh.advertise(heading_pub);
       heading = 0;
     }
@@ -129,14 +145,15 @@ void publishMessage(void *parameter)
       // ambil data kompas dan heading odom
       // char buffer[30];
       // int heading_odom = base.w * 180 / PI;
-      // float left_wheel = m1.encoder_tick_acc / m1.ppr * 0.24;
-      // float right_wheel = m2.encoder_tick_acc / m2.ppr * 0.24;
-      // sprintf(buffer, "%.2f,%.2f,%d,%d,", left_wheel, right_wheel, heading, heading_odom);
+      // float left_wheel = m1.encoder_tick_acc / m1.ppr * 0.204;
+      // float right_wheel = m2.encoder_tick_acc / m2.ppr * 0.204;
+      // sprintf(buffer, "%.2f,%.2f,%d,%d,", base.x, base.y, heading, heading_odom);
       // heading_str_data.data = buffer;
       // heading_pub.publish(&heading_str_data);
 
       is_ros_ready = true;
       pose_pub.publish(&pose_data);
+      heading_int_pub.publish(&heading_data);
     }
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
@@ -152,7 +169,7 @@ void readCompass(void *parameters)
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   QMC5883LCompass compass;
   compass.init();
-  compass.setCalibration(-1711, 452, -930, 1073, -1881, 0);
+  compass.setCalibration(-1465, 1283, -1105, 1558, -1525, 0);
   // compass.setCalibration(-1112, 1340, -1485, 966, -950, 0);
   compass.read();
   last_compass_reading = compass.getAzimuth();
@@ -241,6 +258,27 @@ void countRpm(void *parameters)
 }
 
 /*
+  Menghitung RPM motor, jeda kalkulasi
+  20 ms
+*/
+void odomExtern(void *parameters)
+{
+  en_ext1.ppr = 370;
+  en_ext2.ppr = 370;
+  const int sampling_time_ms = 5;
+  // unsigned long delay_printf = millis();
+  for (;;)
+  {
+    en_ext1.calculateRpm(sampling_time_ms);
+    en_ext2.calculateRpm(sampling_time_ms);
+    // m1.speed_ms = 0.001;
+    // m2.speed_ms = 0.001;
+    // base_ext.calculatePosition(base_ext.w);
+    vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
+  }
+}
+
+/*
   Membaca data encoder terkini dan
   mengcopy nilainya ke data pada topik
   encoder
@@ -273,6 +311,8 @@ void poseControl(void *parameters)
       directMode();
     if (mode == PIVOT)
       pivotMode();
+    if (mode == HEADING)
+      headingMode();
     vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
@@ -286,7 +326,7 @@ void directMode()
     float goal_distance = base.getGoalDistance(goal_x, goal_y);
     float goal_heading = base.getGoalHeading(goal_x, goal_y);
     lin_pid.pos = goal_distance;
-    ang_pid.setpoint = -goal_heading;
+    ang_pid.setpoint = - goal_heading;
     ang_pid.pos = base.w;
 
     float linear = lin_pid.compute_from_err(goal_distance);
@@ -295,9 +335,10 @@ void directMode()
     {
       linear = 0;
       angular = 0;
-      mode = PIVOT;
-      marker_array_position++;
+      // mode = PIVOT;
+      // marker_array_position++;
       DEBUG.println("CHANGE TO PIVOT MODE");
+      pose_control_started = false;
     }
     base.setSpeed(0, linear, angular);
   }
@@ -320,6 +361,16 @@ void pivotMode()
     {
       mode = DIRECT;
     }
+    base.setSpeed(0, 0, angular);
+  }
+}
+
+void headingMode()
+{
+  if (pose_control_started)
+  {
+    ang_pid.pos = base.w;
+    float angular = ang_pid.compute();
     base.setSpeed(0, 0, angular);
   }
 }
@@ -452,10 +503,13 @@ void setup()
   analogWriteFrequency(10000);
   attachInterrupt(digitalPinToInterrupt(m1.en_a), EN1_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m2.en_a), EN2_ISR, FALLING);
+  // attachInterrupt(digitalPinToInterrupt(en_ext1.en_a), EN_EXT1_ISR, FALLING);
+  // attachInterrupt(digitalPinToInterrupt(en_ext2.en_a), EN_EXT2_ISR, FALLING);
   // attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
   m1.pid(7, 0, 1, 255);
   m2.pid(9, 0, 1, 255);
   base.setMotor(m1, m2);
+  base_ext.setMotor(en_ext1, en_ext2);
   // Spawn task RTOS
   // xTaskCreatePinnedToCore(fungsi, "nama fungsi", alokasi memori, prioritas, task handle, core);
   // ESP32 memiliki 3 core, yaitu core 0, core 1, dan ULP
@@ -472,6 +526,7 @@ void setup()
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);                       // Menghitung RPM
   xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);             // Set data untuk message MotorEncoder
   xTaskCreatePinnedToCore(poseControl, "pose control", 10000, NULL, 2, &pose_control_task, 1); // Set data untuk message MotorEncoder
+  // xTaskCreatePinnedToCore(odomExtern, "rpm", 5000, NULL, 2, &odom_extern_task, 1);                       // Menghitung RPM
 }
 
 void loop()
