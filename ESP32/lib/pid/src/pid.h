@@ -8,12 +8,12 @@ public:
     void setPid(float kp, float ki, float kd);
     float compute_from_err(float err);
     float pos = 0;
+    float last_err;
 
 private:
     float kp, ki, kd;
     float i_err;
     float d_err;
-    float last_err;
     float windup = 0.05;
     float limit = 0.6;
 };

@@ -26,6 +26,9 @@ private:
     float r_base = 0.16; // jari-jari base (khusus roda 3)
     double sqrt3 = 1.732050807568877193176604123436845839023590087890625;
     float d_wheel = 0.065;
+    float last_goal_heading;
+    float radToDeg(float rad);
+    float degToRad(float deg);
 public:
     volatile float x, y, w;
     Kinematic(Base base);
@@ -36,7 +39,7 @@ public:
     void setSpeed(float linear_x, float linear_y, float angular_z);
     void calculatePosition(float heading_rad);
     float getGoalDistance(float goal_x, float goal_y);
-    float getGoalHeading(float goal_x, float goal_y);
+    float getGoalHeading(float goal_x, float goal_y, bool normalize_pi);
 };
 
 #endif

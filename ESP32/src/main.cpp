@@ -73,7 +73,8 @@ void onPivotMode(const std_msgs::Empty &msg_data)
   }
 }
 
-void onHeadingMode(const std_msgs::Float32 &msg_data){
+void onHeadingMode(const std_msgs::Float32 &msg_data)
+{
   mode = HEADING;
   pose_control_started = true;
   ang_pid.setpoint = msg_data.data;
@@ -118,7 +119,7 @@ void initNode(void *parameters)
       nh.subscribe(marker_sub);
       nh.subscribe(heading_mode_sub);
       nh.advertise(pose_pub);
-      nh.advertise(heading_int_pub);
+      // nh.advertise(heading_int_pub);
       // nh.advertise(pose_ext_pub);
       // nh.advertise(heading_pub);
       heading = 0;
@@ -147,13 +148,29 @@ void publishMessage(void *parameter)
       // int heading_odom = base.w * 180 / PI;
       // float left_wheel = m1.encoder_tick_acc / m1.ppr * 0.204;
       // float right_wheel = m2.encoder_tick_acc / m2.ppr * 0.204;
-      // sprintf(buffer, "%.2f,%.2f,%d,%d,", base.x, base.y, heading, heading_odom);
+      // sprintf(buffer, "%.2f,%.2f,%.2f,%.2f,%d,%d,", left_wheel, right_wheel, base.x, base.y, heading, heading_odom);
       // heading_str_data.data = buffer;
       // heading_pub.publish(&heading_str_data);
-
       is_ros_ready = true;
       pose_pub.publish(&pose_data);
-      heading_int_pub.publish(&heading_data);
+      // heading_int_pub.publish(&heading_data);
+    }
+    vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
+  }
+}
+
+void serialData(void *parameters)
+{
+  for (;;)
+  {
+    if (pose_control_started)
+    {
+      char buffer[50];
+      int heading_odom = base.w * 180 / PI;
+      float left_wheel = m1.speed_ms * (PUBLISH_DELAY_MS/5);
+      float right_wheel = m2.speed_ms * (PUBLISH_DELAY_MS/5);
+      sprintf(buffer, "%d,%.2f,%.2f,%.2f,%.2f,%d,%d", millis(), left_wheel, right_wheel, base.x, base.y, heading, heading_odom);
+      DEBUG.println(buffer);
     }
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
@@ -236,7 +253,7 @@ void moveBase(void *parameters)
 void countRpm(void *parameters)
 {
   const int sampling_time_ms = 5;
-  // unsigned long delay_printf = millis();
+  unsigned long delay_printf = millis();
   for (;;)
   {
     m1.calculateRpm(sampling_time_ms);
@@ -246,9 +263,9 @@ void countRpm(void *parameters)
     base.calculatePosition(base.w);
     // if (millis() - delay_printf > 100)
     // {
-    //   // DEBUG.printf("m1 : %d m2 : %d\n", m1.encoder_tick_acc, m2.encoder_tick_acc);
-    //   // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
-    //   delay_printf = millis();
+      // DEBUG.printf("m1 : %d m2 : %d\n", m1.encoder_tick_acc, m2.encoder_tick_acc);
+      // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
+      // delay_printf = millis();
     // }
     // DEBUG.printf("m1 : %.3f m2 : %.3f\n", m1.speed_ms, m2.speed_ms);
 
@@ -321,26 +338,36 @@ void directMode()
 {
   if (pose_control_started == true && (marker_array_position < marker_data.points_length))
   {
+    // DEBUG.println("DIRECT MODE");
     float goal_x = marker_data.points[marker_array_position].x;
     float goal_y = marker_data.points[marker_array_position].y;
     float goal_distance = base.getGoalDistance(goal_x, goal_y);
-    float goal_heading = base.getGoalHeading(goal_x, goal_y);
-    lin_pid.pos = goal_distance;
+    float goal_heading = base.getGoalHeading(goal_x, goal_y, false);
     ang_pid.setpoint = - goal_heading;
     ang_pid.pos = base.w;
 
     float linear = lin_pid.compute_from_err(goal_distance);
     float angular = ang_pid.compute();
-    if (abs(lin_pid.setpoint - lin_pid.pos) < 0.01 && abs(ang_pid.setpoint - ang_pid.pos) < 0.1)
+    // DEBUG.printf("dist: %.2f ,heading: %.2f, goal heading %.2f \n", goal_distance, ang_pid.pos, goal_heading);
+    if (abs(goal_distance) < 0.03 && abs(goal_heading) < 0.01)
     {
       linear = 0;
       angular = 0;
       // mode = PIVOT;
+      mode = HEADING;
       // marker_array_position++;
-      DEBUG.println("CHANGE TO PIVOT MODE");
-      pose_control_started = false;
+      ang_pid.reset();
+      lin_pid.reset();
+      ang_pid.setpoint = 0;
+      pose_control_started = true;
     }
+    // DEBUG.printf("x : %.2f y : %.2f goal_heading : %.2f\n", goal_x, goal_y, goal_heading);
+    // DEBUG.printf("ang_sp: %.2f ang_now: %.2f ang_err : %.2f\n", ang_pid.setpoint, ang_pid.pos, ang_pid.last_err);
     base.setSpeed(0, linear, angular);
+  }
+  else
+  {
+    base.setSpeed(0, 0, 0);
   }
 }
 
@@ -348,18 +375,20 @@ void pivotMode()
 {
   if (pose_control_started && (marker_array_position < marker_data.points_length))
   {
+    // DEBUG.println("PIVOT MODE");
     float goal_x = marker_data.points[marker_array_position].x;
     float goal_y = marker_data.points[marker_array_position].y;
     float goal_distance = base.getGoalDistance(goal_x, goal_y);
-    float goal_heading = base.getGoalHeading(goal_x, goal_y);
+    float goal_heading = base.getGoalHeading(goal_x, goal_y, false);
     lin_pid.pos = goal_distance;
     ang_pid.setpoint = -goal_heading;
     ang_pid.pos = base.w;
-    DEBUG.printf("dist : %.2f head : %.2f\n", goal_distance, goal_heading);
     float angular = ang_pid.compute();
     if (abs(ang_pid.setpoint - ang_pid.pos) < 0.1)
     {
       mode = DIRECT;
+      ang_pid.reset();
+      lin_pid.reset();
     }
     base.setSpeed(0, 0, angular);
   }
@@ -521,6 +550,7 @@ void setup()
   xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);          // Test apakah RTOS dapat berjalan
   // xTaskCreatePinnedToCore(initWebSocket, "node", 10000, NULL, 5, &websocket_task, 0); // Inisialisasi ros node
   xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);           // Task publish ros messsage
+  // xTaskCreatePinnedToCore(serialData, "publisher", 10000, NULL, 2, &ros_pub, 1);               // Task publish ros messsage
   xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);               // Membaca sensor kompas
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);                    // Menggerakkan base robot
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);                       // Menghitung RPM

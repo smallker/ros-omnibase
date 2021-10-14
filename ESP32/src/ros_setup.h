@@ -10,7 +10,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/Marker.h>
 #include <sensor_msgs/Imu.h>
-#define PUBLISH_DELAY_MS 125
+#define PUBLISH_DELAY_MS 100
 
 IPAddress server(192, 168, 43, 101); // IP PC yang terinstal ROS
 IPAddress ip_address;

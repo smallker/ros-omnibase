@@ -33,7 +33,6 @@ void Kinematic::setSpeed(float linear_x, float linear_y, float linear_z, float a
     }
     if (base == BASE_DIFF_DRIVE)
     {
-
     }
 }
 
@@ -94,16 +93,56 @@ void Kinematic::calculatePosition(float heading)
     }
 }
 
-float Kinematic::getGoalDistance(float goal_x, float goal_y){
+float Kinematic::getGoalDistance(float goal_x, float goal_y)
+{
     float diff_x = goal_x - x;
     float diff_y = goal_y - y;
     float distance = sqrt((diff_y * diff_y) + (diff_x * diff_x));
     return distance;
 }
 
-float Kinematic::getGoalHeading(float goal_x, float goal_y){
+float Kinematic::getGoalHeading(float goal_x, float goal_y, bool normalize_pi)
+{
+    float x_trans, y_trans, goal_heading, rotation;
     float diff_x = goal_x - x;
     float diff_y = goal_y - y;
-    float goal_heading = atan2(diff_x, diff_y);
+    if (normalize_pi)
+    {
+        if (diff_x >= 0 and diff_y >= 0)
+        {
+            rotation = degToRad(0);
+        }
+        if (diff_x < 0 and diff_y >= 0)
+        {
+            rotation = degToRad(-90);
+        }
+        if (diff_x < 0 and diff_y < 0)
+        {
+            rotation = degToRad(-180);
+        }
+        if (diff_x >= 0 and diff_y < 0)
+        {
+            rotation = degToRad(-270);
+        }
+    }
+    else{
+        rotation = degToRad(0);
+    }
+
+    x_trans = cos(rotation) * diff_x + -sin(rotation) * diff_y;
+    y_trans = sin(rotation) * diff_x + cos(rotation) * diff_y;
+
+    goal_heading = atan2(x_trans, y_trans);
+    // Serial.printf("diff_x : %.2f diff_y %.2f :  x_trans : %.2f y_trans: %.2f heading: %.2f\n", diff_x, diff_y, x_trans, y_trans, radToDeg(goal_heading));
     return goal_heading;
+}
+
+float Kinematic::radToDeg(float rad)
+{
+    return rad * 180 / PI;
+}
+
+float Kinematic::degToRad(float deg)
+{
+    return deg * PI / 180;
 }
