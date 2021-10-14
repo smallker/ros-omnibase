@@ -113,15 +113,15 @@ void initNode(void *parameters)
     if (rosClient.connected() != 1)
     {
       nh.initNode();
-      nh.subscribe(vel_sub);
+      // nh.subscribe(vel_sub);
       nh.subscribe(rst_pos_sub);
       nh.subscribe(pivot_mode_sub);
       nh.subscribe(marker_sub);
       nh.subscribe(heading_mode_sub);
-      nh.advertise(pose_pub);
+      // nh.advertise(pose_pub);
       // nh.advertise(heading_int_pub);
       // nh.advertise(pose_ext_pub);
-      // nh.advertise(heading_pub);
+      nh.advertise(heading_pub);
       heading = 0;
     }
     if (rosClient.connected() == 1)
@@ -144,15 +144,15 @@ void publishMessage(void *parameter)
     if (rosClient.connected() == 1)
     {
       // ambil data kompas dan heading odom
-      // char buffer[30];
-      // int heading_odom = base.w * 180 / PI;
-      // float left_wheel = m1.encoder_tick_acc / m1.ppr * 0.204;
-      // float right_wheel = m2.encoder_tick_acc / m2.ppr * 0.204;
-      // sprintf(buffer, "%.2f,%.2f,%.2f,%.2f,%d,%d,", left_wheel, right_wheel, base.x, base.y, heading, heading_odom);
-      // heading_str_data.data = buffer;
-      // heading_pub.publish(&heading_str_data);
+      char buffer[50];
+      int heading_odom = base.w * 180 / PI;
+      float left_wheel = m1.speed_ms * 20;
+      float right_wheel = m2.speed_ms * 20;
+      sprintf(buffer, "%d,%.4f,%.4f,%.2f,%.2f,%d,%d",millis(), left_wheel, right_wheel, base.x, base.y, heading, heading_odom);
+      heading_str_data.data = buffer;
+      heading_pub.publish(&heading_str_data);
       is_ros_ready = true;
-      pose_pub.publish(&pose_data);
+      // pose_pub.publish(&pose_data);
       // heading_int_pub.publish(&heading_data);
     }
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
@@ -339,9 +339,8 @@ void directMode()
     float goal_y = marker_data.points[marker_array_position].y;
     float goal_distance = base.getGoalDistance(goal_x, goal_y);
     float goal_heading = base.getGoalHeading(goal_x, goal_y, false);
-    ang_pid.setpoint = - goal_heading;
+    ang_pid.setpoint = goal_heading;
     ang_pid.pos = base.w;
-
     float linear = lin_pid.compute_from_err(goal_distance);
     float angular = ang_pid.compute();
     if (abs(goal_distance) < 0.01 && abs(goal_heading) < 0.01)
@@ -372,7 +371,7 @@ void pivotMode()
     float goal_distance = base.getGoalDistance(goal_x, goal_y);
     float goal_heading = base.getGoalHeading(goal_x, goal_y, false);
     lin_pid.pos = goal_distance;
-    ang_pid.setpoint = -goal_heading;
+    ang_pid.setpoint = goal_heading;
     ang_pid.pos = base.w;
     float angular = ang_pid.compute();
     if (abs(ang_pid.setpoint - ang_pid.pos) < 0.1)

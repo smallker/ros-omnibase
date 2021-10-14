@@ -28,7 +28,7 @@
 #define EN2_A   27
 #define EN2_B   34
 #define EN2_PPR 900
-#define R_BASE  0.16
+#define R_BASE  0.15
 #define D_WHEEL 0.065
 
 #else

@@ -27,9 +27,10 @@ private:
     double sqrt3 = 1.732050807568877193176604123436845839023590087890625;
     float d_wheel = 0.065;
     float last_goal_heading;
+
+public:
     float radToDeg(float rad);
     float degToRad(float deg);
-public:
     volatile float x, y, w;
     Kinematic(Base base);
     void setMotor(Motor &m1, Motor &m2);

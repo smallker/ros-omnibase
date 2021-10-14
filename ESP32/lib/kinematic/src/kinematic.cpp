@@ -68,7 +68,7 @@ void Kinematic::calculatePosition()
     if (base == BASE_DIFF_DRIVE)
     {
 
-        float heading = ((w * 180 / PI) + 90) * PI / 180;
+        float heading = degToRad(((radToDeg(w))));
         float leftTravel = m1->speed_ms;
         float rightTravel = m2->speed_ms;
         float deltaTravel = (rightTravel + leftTravel) / 2;
@@ -133,8 +133,8 @@ float Kinematic::getGoalHeading(float goal_x, float goal_y, bool normalize_pi)
     x_trans = cos(rotation) * diff_x + -sin(rotation) * diff_y;
     y_trans = sin(rotation) * diff_x + cos(rotation) * diff_y;
 
-    goal_heading = atan2(x_trans, y_trans);
-    // Serial.printf("diff_x : %.2f diff_y %.2f :  x_trans : %.2f y_trans: %.2f heading: %.2f\n", diff_x, diff_y, x_trans, y_trans, radToDeg(goal_heading));
+    goal_heading = atan2(y_trans, x_trans);
+    Serial.printf("diff_x : %.2f diff_y %.2f :  x_trans : %.2f y_trans: %.2f heading: %.2f\n", diff_x, diff_y, x_trans, y_trans, radToDeg(goal_heading));
     return goal_heading;
 }
 
