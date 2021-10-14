@@ -13,19 +13,19 @@ void ICACHE_RAM_ATTR EN2_ISR()
   portEXIT_CRITICAL(&mux);
 }
 
-void ICACHE_RAM_ATTR EN_EXT1_ISR()
-{
-  portENTER_CRITICAL(&mux);
-  en_ext1.isrHandler();
-  portEXIT_CRITICAL(&mux);
-}
+// void ICACHE_RAM_ATTR EN_EXT1_ISR()
+// {
+//   portENTER_CRITICAL(&mux);
+//   en_ext1.isrHandler();
+//   portEXIT_CRITICAL(&mux);
+// }
 
-void ICACHE_RAM_ATTR EN_EXT2_ISR()
-{
-  portENTER_CRITICAL(&mux);
-  en_ext2.isrHandler();
-  portEXIT_CRITICAL(&mux);
-}
+// void ICACHE_RAM_ATTR EN_EXT2_ISR()
+// {
+//   portENTER_CRITICAL(&mux);
+//   en_ext2.isrHandler();
+//   portEXIT_CRITICAL(&mux);
+// }
 
 void onCmdVel(const geometry_msgs::Twist &msg_data)
 {
@@ -260,16 +260,13 @@ void countRpm(void *parameters)
     m2.calculateRpm(sampling_time_ms);
     // m1.speed_ms = 0.001;
     // m2.speed_ms = 0.001;
-    base.calculatePosition(base.w);
+    base.calculatePosition();
     // if (millis() - delay_printf > 100)
     // {
-      // DEBUG.printf("m1 : %d m2 : %d\n", m1.encoder_tick_acc, m2.encoder_tick_acc);
-      // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
-      // delay_printf = millis();
+    //   DEBUG.printf("m1 : %d m2 : %d\n", m1.encoder_tick_acc, m2.encoder_tick_acc);
+    //   // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
+    //   delay_printf = millis();
     // }
-    // DEBUG.printf("m1 : %.3f m2 : %.3f\n", m1.speed_ms, m2.speed_ms);
-
-    // DEBUG.println(m1.rpm_abs);
     vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
   }
 }
@@ -280,14 +277,14 @@ void countRpm(void *parameters)
 */
 void odomExtern(void *parameters)
 {
-  en_ext1.ppr = 370;
-  en_ext2.ppr = 370;
+  // en_ext1.ppr = 370;
+  // en_ext2.ppr = 370;
   const int sampling_time_ms = 5;
   // unsigned long delay_printf = millis();
   for (;;)
   {
-    en_ext1.calculateRpm(sampling_time_ms);
-    en_ext2.calculateRpm(sampling_time_ms);
+    // en_ext1.calculateRpm(sampling_time_ms);
+    // en_ext2.calculateRpm(sampling_time_ms);
     // m1.speed_ms = 0.001;
     // m2.speed_ms = 0.001;
     // base_ext.calculatePosition(base_ext.w);
@@ -338,7 +335,6 @@ void directMode()
 {
   if (pose_control_started == true && (marker_array_position < marker_data.points_length))
   {
-    // DEBUG.println("DIRECT MODE");
     float goal_x = marker_data.points[marker_array_position].x;
     float goal_y = marker_data.points[marker_array_position].y;
     float goal_distance = base.getGoalDistance(goal_x, goal_y);
@@ -348,21 +344,16 @@ void directMode()
 
     float linear = lin_pid.compute_from_err(goal_distance);
     float angular = ang_pid.compute();
-    // DEBUG.printf("dist: %.2f ,heading: %.2f, goal heading %.2f \n", goal_distance, ang_pid.pos, goal_heading);
-    if (abs(goal_distance) < 0.03 && abs(goal_heading) < 0.01)
+    if (abs(goal_distance) < 0.01 && abs(goal_heading) < 0.01)
     {
       linear = 0;
       angular = 0;
-      // mode = PIVOT;
-      mode = HEADING;
-      // marker_array_position++;
+      mode = PIVOT;
+      marker_array_position++;
       ang_pid.reset();
       lin_pid.reset();
-      ang_pid.setpoint = 0;
-      pose_control_started = true;
+      pose_control_started = false;
     }
-    // DEBUG.printf("x : %.2f y : %.2f goal_heading : %.2f\n", goal_x, goal_y, goal_heading);
-    // DEBUG.printf("ang_sp: %.2f ang_now: %.2f ang_err : %.2f\n", ang_pid.setpoint, ang_pid.pos, ang_pid.last_err);
     base.setSpeed(0, linear, angular);
   }
   else
@@ -391,6 +382,9 @@ void pivotMode()
       lin_pid.reset();
     }
     base.setSpeed(0, 0, angular);
+  }
+  else{
+    base.setSpeed(0, 0, 0);
   }
 }
 
@@ -515,17 +509,6 @@ void initWebSocket(void *parameters)
   }
 }
 
-void publishData(void *parameters)
-{
-#ifndef AP
-  while (true)
-  {
-    if (ws_ready)
-      break;
-  }
-#endif
-}
-
 void setup()
 {
   DEBUG.begin(115200);
@@ -537,8 +520,12 @@ void setup()
   // attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
   m1.pid(7, 0, 1, 255);
   m2.pid(9, 0, 1, 255);
+
+  m1.setWheelDiameter(D_WHEEL);
+  m2.setWheelDiameter(D_WHEEL);
   base.setMotor(m1, m2);
-  base_ext.setMotor(en_ext1, en_ext2);
+  base.setBaseRadius(R_BASE);
+  // base_ext.setMotor(en_ext1, en_ext2);
   // Spawn task RTOS
   // xTaskCreatePinnedToCore(fungsi, "nama fungsi", alokasi memori, prioritas, task handle, core);
   // ESP32 memiliki 3 core, yaitu core 0, core 1, dan ULP

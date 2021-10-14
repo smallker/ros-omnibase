@@ -19,7 +19,7 @@ class Motor
     // #define EMS
 private:
     byte ma_pin, mb_pin, pwm_pin;
-    float d_wheel = 0.65;
+    float d_wheel = 0.065;
     float windup, pwm_pid, err, last_err, d_err, i_err;
     void forward(int pwm);
     void reverse(int pwm);
@@ -53,6 +53,7 @@ public:
     void setPidThreshold(int up_thres, int down_thres);
     void setPwmThreshold(int threshold);
     float getDistance();
+    void setWheelDiameter(float diameter);
 };
 
 #endif

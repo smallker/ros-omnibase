@@ -20,14 +20,28 @@
 #define M2_PWM 19
 
 // kode EN untuk pin encoder
-#define EN1_A 35
-#define EN1_B 26
-#define EN2_A 27
-#define EN2_B 34
-#define EN3_A 39
-#define EN3_B 13
-#define EN4_A 15
-#define EN4_B 14
+// #define INTERNAL_EN
+#if defined(INTERNAL_EN)
+#define EN1_A   35
+#define EN1_B   26
+#define EN1_PPR 700
+#define EN2_A   27
+#define EN2_B   34
+#define EN2_PPR 900
+#define R_BASE  0.16
+#define D_WHEEL 0.065
+
+#else
+#define EN1_A   13
+#define EN1_B   39
+#define EN1_PPR 400
+#define EN2_A   15
+#define EN2_B   14
+#define EN2_PPR 400
+#define R_BASE  0.068
+#define D_WHEEL 0.025
+#endif
+
 // Digunakan mematikan interrupt termasuk RTOS
 // saat eksternal interrupt aktif
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
@@ -71,10 +85,10 @@ volatile bool pose_control_started;
 volatile int marker_array_position;
 
 // inisialisasi objek motor
-Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B, 700);
-Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B, 900);
-Motor en_ext1(EN3_A, EN3_B);
-Motor en_ext2(EN4_A, EN4_B);
+Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B, EN1_PPR);
+Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B, EN2_PPR);
+// Motor en_ext1(EN3_A, EN3_B);
+// Motor en_ext2(EN4_A, EN4_B);
 // Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
 
 // inisialisasi objek kinematik

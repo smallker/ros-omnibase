@@ -63,11 +63,12 @@ void Kinematic::setSpeed(float lin_x, float lin_y, float ang_z)
     }
 }
 
-void Kinematic::calculatePosition(float heading)
+void Kinematic::calculatePosition()
 {
     if (base == BASE_DIFF_DRIVE)
     {
-        heading = ((heading * 180 / PI) + 90) * PI / 180;
+
+        float heading = ((w * 180 / PI) + 90) * PI / 180;
         float leftTravel = m1->speed_ms;
         float rightTravel = m2->speed_ms;
         float deltaTravel = (rightTravel + leftTravel) / 2;
@@ -75,7 +76,6 @@ void Kinematic::calculatePosition(float heading)
         float deltaX = deltaTravel * cos(heading);
         float deltaY = deltaTravel * sin(heading);
         w += deltaTheta;
-        // w = heading;
         x += deltaX;
         y += deltaY;
     }
@@ -87,7 +87,8 @@ void Kinematic::calculatePosition(float heading)
         float v3 = (m3->speed_ms);
         float vmx = (2 * v2 - v1 - v3) / 3;
         float vmy = ((sqrt3 * v3) - (sqrt3 * v1)) / 3;
-        w = heading * PI / 180;
+        float heading = (v1 + v2 + v3) / (3 * (r_base * 2 * 3));
+        w += heading * PI / 180;
         x += (cos(w) * vmx) - (sin(w) * vmy);
         y += (sin(w) * vmx) + (cos(w) * vmy);
     }
@@ -145,4 +146,8 @@ float Kinematic::radToDeg(float rad)
 float Kinematic::degToRad(float deg)
 {
     return deg * PI / 180;
+}
+
+void Kinematic::setBaseRadius(float r_base){
+    this->r_base = r_base;
 }

@@ -225,7 +225,7 @@ void Motor::calculateRpm(int sampling_time_ms)
 #endif
     rpm = (encoder_tick / ppr) * (60000 / sampling_time_ms);
     rpm_abs = abs(rpm);
-    speed_ms = (PI * d_wheel/2) / 60000.000 * rpm;
+    speed_ms = (PI * d_wheel) / 6000.000 * rpm;
     encoder_tick = 0;
 }
 
@@ -265,4 +265,11 @@ void Motor::setPwmFrequency()
 float Motor::getDistance()
 {
     return (encoder_tick_acc / ppr) * pi * d_wheel;
+}
+
+/*
+    Set diameter roda dalam satuan meter
+*/
+void Motor::setWheelDiameter(float diameter){
+    this->d_wheel = diameter;
 }
