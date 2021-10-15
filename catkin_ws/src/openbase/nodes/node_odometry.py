@@ -2,7 +2,7 @@
 from __future__ import division
 
 import rospy
-from std_msgs.msg import Empty, String
+from std_msgs.msg import Empty, String, Int32
 from nav_msgs.msg import Odometry
 from tf.broadcaster import TransformBroadcaster
 from tf.transformations import quaternion_from_euler
@@ -11,6 +11,8 @@ from visualization_msgs.msg import Marker
 
 class OdometryNode:
     seq = 0
+    pose:Pose2D = Pose2D()
+    heading:Int32 = Int32()
 
     def on_robot_heading(self, msg:String):
         rospy.loginfo(msg.data)

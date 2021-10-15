@@ -40,8 +40,8 @@ def publish_sp_pos(goal_x, goal_y):
     rospy.Publisher('/pivot_mode', Empty, queue_size=1).publish()
 
 def set_forward_dist():
-    goal_x = 0
-    goal_y = float(ui.cb_forward.currentText())
+    goal_x = float(ui.cb_forward.currentText())
+    goal_y = 0
     publish_sp_pos(goal_x, goal_y)
 
 def set_heading():
@@ -84,10 +84,10 @@ if __name__=='__main__':
     while not rospy.is_shutdown():
         rospy.init_node('node_gui')
         base_frame_id = rospy.get_param('~base_frame_id')
-        rospy.Subscriber(f'/{base_frame_id}/pose_data',
-                         Pose2D, on_robot_pose)
-        rospy.Subscriber(f'/{base_frame_id}/heading',
-                         Int32, on_robot_heading)
+        # rospy.Subscriber(f'/{base_frame_id}/pose_data',
+        #                  Pose2D, on_robot_pose)
+        # rospy.Subscriber(f'/{base_frame_id}/heading',
+        #                  Int32, on_robot_heading)
         ui.setupUi(main_window)
         ui.pb_set_forward.clicked.connect(set_forward_dist)
         ui.pb_set_heading.clicked.connect(set_heading)

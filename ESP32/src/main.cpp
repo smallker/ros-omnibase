@@ -39,9 +39,9 @@ void onResetPose(const std_msgs::Empty &msg_data)
   m1.encoder_tick_acc = 0;
   m2.encoder_tick_acc = 0;
   heading = 0;
-  base.x = 0;
-  base.y = 0;
-  base.w = 0;
+  base.pos_x = 0;
+  base.pos_y = 0;
+  base.pos_th = 0;
   lin_pid.setpoint = 0;
   ang_pid.setpoint = 0;
   lin_pid.reset();
@@ -145,10 +145,10 @@ void publishMessage(void *parameter)
     {
       // ambil data kompas dan heading odom
       char buffer[50];
-      int heading_odom = base.w * 180 / PI;
+      int heading_odom = base.pos_th * 180 / PI;
       float left_wheel = m1.speed_ms * 20;
       float right_wheel = m2.speed_ms * 20;
-      sprintf(buffer, "%d,%.4f,%.4f,%.2f,%.2f,%d,%d",millis(), left_wheel, right_wheel, base.x, base.y, heading, heading_odom);
+      sprintf(buffer, "%d,%.4f,%.4f,%.2f,%.2f,%d,%d", millis(), left_wheel, right_wheel, base.pos_x, base.pos_y, heading, heading_odom);
       heading_str_data.data = buffer;
       heading_pub.publish(&heading_str_data);
       is_ros_ready = true;
@@ -166,10 +166,10 @@ void serialData(void *parameters)
     if (pose_control_started)
     {
       char buffer[50];
-      int heading_odom = base.w * 180 / PI;
-      float left_wheel = m1.speed_ms * (PUBLISH_DELAY_MS/5);
-      float right_wheel = m2.speed_ms * (PUBLISH_DELAY_MS/5);
-      sprintf(buffer, "%d,%.2f,%.2f,%.2f,%.2f,%d,%d", millis(), left_wheel, right_wheel, base.x, base.y, heading, heading_odom);
+      int heading_odom = base.pos_th * 180 / PI;
+      float left_wheel = m1.speed_ms * (PUBLISH_DELAY_MS / 5);
+      float right_wheel = m2.speed_ms * (PUBLISH_DELAY_MS / 5);
+      sprintf(buffer, "%d,%.2f,%.2f,%.2f,%.2f,%d,%d", millis(), left_wheel, right_wheel, base.pos_x, base.pos_y, heading, heading_odom);
       DEBUG.println(buffer);
     }
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
@@ -258,8 +258,6 @@ void countRpm(void *parameters)
   {
     m1.calculateRpm(sampling_time_ms);
     m2.calculateRpm(sampling_time_ms);
-    // m1.speed_ms = 0.001;
-    // m2.speed_ms = 0.001;
     base.calculatePosition();
     // if (millis() - delay_printf > 100)
     // {
@@ -303,13 +301,66 @@ void odometry(void *parameters)
   {
     // pose_data.x = m1.encoder_tick_acc;
     // pose_data.y = m2.encoder_tick_acc;
-    pose_data.x = base.x;
-    pose_data.y = base.y;
-    pose_data.theta = base.w;
+    pose_data.x = base.pos_x;
+    pose_data.y = base.pos_y;
+    pose_data.theta = base.pos_th;
     // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
 }
+
+
+void onOffMotor()
+{
+  float pwm = 255;
+  if (pose_control_started == true)
+  {
+    if (base.pos_x < 1)
+    {
+      // DEBUG.println(base.w);
+      if (base.pos_th < - 0.1)
+      {
+        m1.speed(-pwm);
+        m2.speed(-pwm);
+        // base.setSpeed(0, 0.3, 0.3);
+      }
+      else if (base.pos_th > 0.1)
+      {
+        m1.speed(pwm);
+        m2.speed(pwm);
+        // base.setSpeed(0, 0.3, -0.3);
+      }
+      else{
+        m1.speed(pwm);
+        m2.speed(-pwm);
+      }
+    }
+    else
+    {
+      base.setSpeed(0, 0, 0);
+      pose_control_started = false;
+    }
+  }
+}
+
+void lossMode()
+{
+  if (pose_control_started == true)
+  {
+    if (base.pos_x < 1)
+    {
+      m1.speed(255);
+      m2.speed(-255);
+      // base.setSpeed(0, 0.6, 0);
+    }
+    else
+    {
+      // base.setSpeed(0, 0, 0);
+      pose_control_started = false;
+    }
+  }
+}
+
 
 /*
   Kendali PID posisi robot
@@ -321,6 +372,8 @@ void poseControl(void *parameters)
 {
   for (;;)
   {
+    // lossMode();
+    // onOffMotor();
     if (mode == DIRECT)
       directMode();
     if (mode == PIVOT)
@@ -333,6 +386,7 @@ void poseControl(void *parameters)
 
 void directMode()
 {
+#if defined(USE_ROS)
   if (pose_control_started == true && (marker_array_position < marker_data.points_length))
   {
     float goal_x = marker_data.points[marker_array_position].x;
@@ -359,10 +413,41 @@ void directMode()
   {
     base.setSpeed(0, 0, 0);
   }
+
+#else
+  if (pose_control_started == true && (marker_array_position < markers.points_length))
+  {
+    float goal_x = markers.markers_x.at(marker_array_position);
+    float goal_y = markers.markers_y.at(marker_array_position);
+    float goal_distance = base.getGoalDistance(goal_x, goal_y);
+    float goal_heading = base.getGoalHeading(goal_x, goal_y, false);
+    ang_pid.setpoint = goal_heading;
+    ang_pid.pos = base.pos_th;
+    distance = goal_distance;
+    float linear = lin_pid.compute_from_err(goal_distance);
+    float angular = ang_pid.compute();
+    if (abs(goal_distance) <= 0.01)
+    {
+      linear = 0;
+      angular = 0;
+      mode = PIVOT;
+      marker_array_position++;
+      ang_pid.reset();
+      lin_pid.reset();
+      // pose_control_started = false;
+    }
+    base.setSpeed(0, linear, angular);
+  }
+  else
+  {
+    base.setSpeed(0, 0, 0);
+  }
+#endif
 }
 
 void pivotMode()
 {
+#if defined(USE_ROS)
   if (pose_control_started && (marker_array_position < marker_data.points_length))
   {
     // DEBUG.println("PIVOT MODE");
@@ -382,7 +467,29 @@ void pivotMode()
     }
     base.setSpeed(0, 0, angular);
   }
-  else{
+#else
+  if (pose_control_started && (marker_array_position < markers.points_length))
+  {
+    // DEBUG.println("PIVOT MODE");
+    float goal_x = markers.markers_x.at(marker_array_position);
+    float goal_y = markers.markers_y.at(marker_array_position);
+    float goal_distance = base.getGoalDistance(goal_x, goal_y);
+    float goal_heading = base.getGoalHeading(goal_x, goal_y, false);
+    lin_pid.pos = goal_distance;
+    ang_pid.setpoint = goal_heading;
+    ang_pid.pos = base.pos_th;
+    float angular = ang_pid.compute();
+    if (abs(ang_pid.setpoint - ang_pid.pos) < 0.1)
+    {
+      mode = DIRECT;
+      ang_pid.reset();
+      lin_pid.reset();
+    }
+    base.setSpeed(0, 0, angular);
+  }
+#endif
+  else
+  {
     base.setSpeed(0, 0, 0);
   }
 }
@@ -391,7 +498,7 @@ void headingMode()
 {
   if (pose_control_started)
   {
-    ang_pid.pos = base.w;
+    ang_pid.pos = base.pos_th;
     float angular = ang_pid.compute();
     base.setSpeed(0, 0, angular);
   }
@@ -410,7 +517,6 @@ void initWebSocket(void *parameters)
   WiFiServer wifiServer(80);
   wifiServer.begin();
   DEBUG.println("WS server begin");
-  unsigned long millis_server = millis();
   for (;;)
   {
     WiFiClient client = wifiServer.available();
@@ -418,25 +524,37 @@ void initWebSocket(void *parameters)
     {
       while (client.connected())
       {
-        if (millis() - millis_server > 500)
-        {
-          StaticJsonDocument<200> doc;
+        
+          if (millis()%100 == 0)
+          {
+            float left = m1.speed_ms * 20.00;
+            float right = m2.speed_ms * 20.00;
+            float theta = base.radToDeg(base.pos_th);
+            // client.printf("%d,%.3f,%.3f,%.2f,%.2f,%.2f,%d\n",millis(),left, right,base.pos_x,base.pos_y,theta,heading);
+            // StaticJsonDocument<200> doc;
 
-          doc["type"] = 1;
-          doc["sc"] = "en";
+            // doc["type"] = 1;
+            // doc["sc"] = "en";
 
-          JsonObject data = doc.createNestedObject("data");
-          data["x"] = base.x;
-          data["y"] = base.y;
-          data["w"] = (base.w) * 180 / PI;
-          String buffer;
-          serializeJson(doc, buffer);
-          // Serial.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
-          // client.println(buffer);
-          // client.printf("%.2f,%.2f", base.x + rand() % 100, base.y + rand() % 100);
-          // client.printf("m1 : %d m2 : %d", m1.encoder_tick_acc, m2.encoder_tick_acc);
-          millis_server = millis();
-        }
+            // JsonObject data = doc.createNestedObject("data");
+            // data["t"] = millis();
+            // data["l"] = m1.speed_ms * 20.00;
+            // data["r"] = m1.speed_ms * 20.00;
+            // data["x"] = base.pos_x;
+            // data["y"] = base.pos_y;
+            // data["w"] = (base.pos_th) * 180 / PI;
+            // data["cmp"] = heading;
+            // String buffer;
+            // serializeJson(doc, buffer);
+            // Serial.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
+            // client.print(buffer);
+            // client.printf("%.2f,%.2f,%.2f,%.2f,%.2f", base.x, base.y);
+            // client.printf("m1 : %d m2 : %d", m1.encoder_tick_acc, m2.encoder_tick_acc);
+            // client.printf("started : %d, x : %.2f, y : %.2f, th : %.2f , dist : %.2f", pose_control_started, base.pos_x, base.pos_y, base.pos_th, distance);
+            // millis_server = millis();
+            // client.printf("%d,%.2f,%.2f,%.2f,%.2f",millis())
+          }
+        
 
         while (client.available() > 0)
         {
@@ -459,10 +577,14 @@ void initWebSocket(void *parameters)
             0 = setpoint
             1 = speed
             2 = reset
+            3 = heading
           */
           int type = doc["type"];
           if (type == 0)
           {
+            markers.markers_x.clear();
+            markers.markers_y.clear();
+            markers.points_length = 0;
             for (JsonObject data_item : doc["data"].as<JsonArray>())
             {
               float data_item_x = data_item["x"]; // 3.3, 3.3, 3.3, 3.3, 3.3, 3.3
@@ -470,9 +592,11 @@ void initWebSocket(void *parameters)
               markers.points_length++;
               markers.markers_x.push_back(data_item_x);
               markers.markers_y.push_back(data_item_y);
-              DEBUG.printf("x => %.2f , y => %.2f\n", data_item_x, data_item_y);
+              // client.printf("x => %.2f , y => %.2f\n", data_item_x, data_item_y);
             }
+            mode = PIVOT;
             pose_control_started = true;
+            marker_array_position = 0;
           }
 
           if (type == 1)
@@ -486,17 +610,17 @@ void initWebSocket(void *parameters)
           }
           if (type == 2)
           {
-            base_speed.x_speed = 0;
-            base_speed.y_speed = 0;
-            base_speed.w_speed = 0;
-            base.x = 0;
-            base.y = 0;
-            base.w = 0;
-            m1.encoder_tick_acc = 0;
-            m2.encoder_tick_acc = 0;
-            pose_control_started = true;
-            lin_pid.reset();
-            ang_pid.reset();
+          m1.encoder_tick_acc = 0;
+          m2.encoder_tick_acc = 0;
+          heading = 0;
+          base.pos_x = 0;
+          base.pos_y = 0;
+          base.pos_th = 0;
+          lin_pid.setpoint = 0;
+          ang_pid.setpoint = 0;
+          lin_pid.reset();
+          ang_pid.reset();
+          pose_control_started = false;
           }
         }
         vTaskDelay(1);
@@ -519,7 +643,8 @@ void setup()
   // attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
   m1.pid(7, 0, 1, 255);
   m2.pid(9, 0, 1, 255);
-
+  // lin_pid.setLimit(0.1);
+  // lin_pid.windup = 0.01;
   m1.setWheelDiameter(D_WHEEL);
   m2.setWheelDiameter(D_WHEEL);
   base.setMotor(m1, m2);
@@ -532,10 +657,13 @@ void setup()
   // Task yang paling sering dijalankan diberikan prioritas paling tinggi
   // sem_i2c = xSemaphoreCreateMutex();
   xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);
-  xTaskCreatePinnedToCore(initNode, "node", 10000, NULL, 5, &node_handle_task, 0); // Inisialisasi ros node
-  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);          // Test apakah RTOS dapat berjalan
-  // xTaskCreatePinnedToCore(initWebSocket, "node", 10000, NULL, 5, &websocket_task, 0); // Inisialisasi ros node
-  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);           // Task publish ros messsage
+  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1); // Test apakah RTOS dapat berjalan
+#if defined(USE_ROS)
+  xTaskCreatePinnedToCore(initNode, "node", 10000, NULL, 5, &node_handle_task, 0);   // Inisialisasi ros node
+  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 0); // Task publish ros messsage
+#else
+  xTaskCreatePinnedToCore(initWebSocket, "node", 10000, NULL, 5, &websocket_task, 0); // Inisialisasi ros node
+#endif
   // xTaskCreatePinnedToCore(serialData, "publisher", 10000, NULL, 2, &ros_pub, 1);               // Task publish ros messsage
   xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);               // Membaca sensor kompas
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);                    // Menggerakkan base robot

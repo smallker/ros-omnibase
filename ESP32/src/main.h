@@ -20,16 +20,16 @@
 #define M2_PWM 19
 
 // kode EN untuk pin encoder
-// #define INTERNAL_EN
+#define INTERNAL_EN
 #if defined(INTERNAL_EN)
 #define EN1_A   35
 #define EN1_B   26
 #define EN1_PPR 700
 #define EN2_A   27
 #define EN2_B   34
-#define EN2_PPR 900
+#define EN2_PPR 768
 #define R_BASE  0.15
-#define D_WHEEL 0.065
+#define D_WHEEL 0.0325
 
 #else
 #define EN1_A   13
@@ -41,7 +41,7 @@
 #define R_BASE  0.068
 #define D_WHEEL 0.025
 #endif
-
+volatile float distance;
 // Digunakan mematikan interrupt termasuk RTOS
 // saat eksternal interrupt aktif
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
@@ -58,6 +58,7 @@ TaskHandle_t odometry_task;
 TaskHandle_t imu_task;
 TaskHandle_t pose_control_task;
 TaskHandle_t odom_extern_task;
+TaskHandle_t websocket_task;
 // Task RTOS
 
 void blink(void *parameters);
@@ -94,8 +95,8 @@ Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B, EN2_PPR);
 // inisialisasi objek kinematik
 Kinematic base(BASE_DIFF_DRIVE);
 Kinematic base_ext(BASE_DIFF_DRIVE);
-Pid lin_pid = Pid(0.2, 0, 1);
-Pid ang_pid = Pid(0.2, 0, 1);
+Pid lin_pid = Pid(0.2, 0.1, 1);
+Pid ang_pid = Pid(0.2, 0.1, 1);
 
 // Array marker
 struct Markers

@@ -59,3 +59,7 @@ void Pid::setPid(float kp, float ki, float kd)
     this->ki = ki;
     this->kd = kd;
 }
+
+void Pid::setLimit(float limit){
+    this->limit = limit;
+}

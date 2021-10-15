@@ -28,7 +28,7 @@ class NodeAutonomous:
         diff_x = goal_x - pose_x
         diff_y = goal_y - pose_y
         goal_distance = sqrt((diff_y ** 2) + (diff_x ** 2))
-        goal_heading = atan2(diff_y, diff_x)
+        goal_heading = atan2(diff_x, diff_y)
         return goal_distance, goal_heading
 
     def on_marker_set(self, msg: Marker):
@@ -49,7 +49,7 @@ class NodeAutonomous:
             distance, heading = self.get_distance_goal_and_heading(
                 goal_x, goal_y, pose.x, pose.y,)
             self.lin_pid.pos = distance
-            self.ang_pid.sp = - heading
+            # self.ang_pid.sp = - heading
             self.ang_pid.pos = pose.theta
             self.twist.linear.x = self.lin_pid.compute_from_err(distance)
             self.twist.angular.z = self.ang_pid.compute()

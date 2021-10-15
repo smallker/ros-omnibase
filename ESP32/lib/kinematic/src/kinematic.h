@@ -31,7 +31,7 @@ private:
 public:
     float radToDeg(float rad);
     float degToRad(float deg);
-    volatile float x, y, w;
+    volatile float pos_x, pos_y, pos_th;
     Kinematic(Base base);
     void setMotor(Motor &m1, Motor &m2);
     void setMotor(Motor &m1, Motor &m2, Motor &m3);

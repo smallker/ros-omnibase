@@ -38,6 +38,15 @@ class Ws(QThread):
         except ConnectionResetError:
             self.init_connection()
 
+    def send_custom_data(self, msg):
+        self.start_logging = False
+        self.log_file_name = self.get_script_path()
+        try:
+            self.client.send((json.dumps(msg)+'\n').encode())
+            self.start_logging = True
+        except Exception as e:
+            self.init_connection()
+
     def send_movement(self, direction):
         angular = {
             'turn_right': -self.angular_speed,
@@ -63,6 +72,7 @@ class Ws(QThread):
         self.client.send((json.dumps(payload)+'\n').encode())
 
     def send_reset(self):
+        self.start_logging = False
         self.client.send((json.dumps({'type':2})+'\n').encode())
 
     def get_script_path(self):
@@ -85,9 +95,12 @@ class Ws(QThread):
         while True:
             msg = self.client.recv(150)
             msg = msg.decode('utf-8')
-            print(msg)
-            # if self.start_logging:
-            #     msg = self.client.recv(150)
+            if self.start_logging:
+                # print(msg)
+                f = open(self.log_file_name, 'a')
+                f.write(msg)
+                f.close()
+                # msg = self.client.recv(150)
             #     msg = msg.decode('utf-8')
             #     print(msg)
                 # try:

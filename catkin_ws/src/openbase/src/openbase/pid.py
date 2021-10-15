@@ -1,4 +1,6 @@
 class Pid:
+    err:float = 0
+
     i_err:float = 0
     d_err:float = 0
     last_err:float = 0

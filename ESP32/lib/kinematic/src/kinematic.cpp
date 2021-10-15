@@ -68,16 +68,16 @@ void Kinematic::calculatePosition()
     if (base == BASE_DIFF_DRIVE)
     {
 
-        float heading = degToRad(((radToDeg(w))));
+        float heading = degToRad(((radToDeg(pos_th))));
         float leftTravel = m1->speed_ms;
         float rightTravel = m2->speed_ms;
         float deltaTravel = (rightTravel + leftTravel) / 2;
         float deltaTheta = (rightTravel - leftTravel) / (this->r_base * 2);
         float deltaX = deltaTravel * cos(heading);
         float deltaY = deltaTravel * sin(heading);
-        w += deltaTheta;
-        x += deltaX;
-        y += deltaY;
+        pos_th += deltaTheta;
+        pos_x += deltaX;
+        pos_y += deltaY;
     }
 
     if (base == BASE_OMNI_Y)
@@ -88,16 +88,16 @@ void Kinematic::calculatePosition()
         float vmx = (2 * v2 - v1 - v3) / 3;
         float vmy = ((sqrt3 * v3) - (sqrt3 * v1)) / 3;
         float heading = (v1 + v2 + v3) / (3 * (r_base * 2 * 3));
-        w += heading * PI / 180;
-        x += (cos(w) * vmx) - (sin(w) * vmy);
-        y += (sin(w) * vmx) + (cos(w) * vmy);
+        pos_th += heading * PI / 180;
+        pos_x += (cos(pos_th) * vmx) - (sin(pos_th) * vmy);
+        pos_y += (sin(pos_th) * vmx) + (cos(pos_th) * vmy);
     }
 }
 
 float Kinematic::getGoalDistance(float goal_x, float goal_y)
 {
-    float diff_x = goal_x - x;
-    float diff_y = goal_y - y;
+    float diff_x = goal_x - pos_x;
+    float diff_y = goal_y - pos_y;
     float distance = sqrt((diff_y * diff_y) + (diff_x * diff_x));
     return distance;
 }
@@ -105,8 +105,8 @@ float Kinematic::getGoalDistance(float goal_x, float goal_y)
 float Kinematic::getGoalHeading(float goal_x, float goal_y, bool normalize_pi)
 {
     float x_trans, y_trans, goal_heading, rotation;
-    float diff_x = goal_x - x;
-    float diff_y = goal_y - y;
+    float diff_x = goal_x - pos_x;
+    float diff_y = goal_y - pos_y;
     if (normalize_pi)
     {
         if (diff_x >= 0 and diff_y >= 0)
@@ -134,7 +134,7 @@ float Kinematic::getGoalHeading(float goal_x, float goal_y, bool normalize_pi)
     y_trans = sin(rotation) * diff_x + cos(rotation) * diff_y;
 
     goal_heading = atan2(y_trans, x_trans);
-    Serial.printf("diff_x : %.2f diff_y %.2f :  x_trans : %.2f y_trans: %.2f heading: %.2f\n", diff_x, diff_y, x_trans, y_trans, radToDeg(goal_heading));
+    // Serial.printf("diff_x : %.2f diff_y %.2f :  x_trans : %.2f y_trans: %.2f heading: %.2f\n", diff_x, diff_y, x_trans, y_trans, radToDeg(goal_heading));
     return goal_heading;
 }
 
