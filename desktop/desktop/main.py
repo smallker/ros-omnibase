@@ -1,7 +1,7 @@
 import sys
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSlot, reset
-from desktop.core.ws.odom_data import Odomdata
+from desktop.core.ws.data import Data
 from desktop.core.ws.ws import Ws
 from desktop.ui import Ui_MainWindow
 from desktop.ui.graph_window import GraphWindow
@@ -27,19 +27,6 @@ def send():
 
 arr_x = list()
 arr_y = list()
-
-@pyqtSlot(Odomdata)
-def draw_graph(data:Odomdata):
-    try:
-        x = data.data.x
-        y = data.data.y
-        arr_x.append(x)
-        arr_y.append(y)
-        print(f'x : {x} y : {y}')
-        en_graph_window.plot(arr_x, arr_y)
-        en_graph_window.show()
-    except Exception as e:
-        print(e)
 
 def move_forward():
     ws.send_movement('forward')
@@ -107,6 +94,13 @@ def set_position():
 def reset():
     ws.send_reset()
 
+@pyqtSlot(Data)
+def change_state(data:Data):
+    ui.pos_x.setText(str(data.pos_x))
+    ui.pos_y.setText(str(data.pos_y))
+    ui.pos_th.setText(str(data.pos_th))
+    ui.compass_val.setText(str(data.compass))
+
 def main():
     ui.setupUi(main_window)
     main_window.show()
@@ -116,5 +110,6 @@ def main():
     ui.edit_pos_y.textChanged.connect(pos_y_onchanged)
     ui.pb_set_pos.clicked.connect(set_position)
     ui.pb_reset.clicked.connect(reset)
+    ws.robot_position.connect(change_state)
     # ws.robot_position.connect(draw_graph)
     sys.exit(app.exec_())

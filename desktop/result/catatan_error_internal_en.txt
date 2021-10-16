@@ -1,0 +1,9 @@
+1). -1X -1Y
+    Error :
+    -13cm x , -2 cm y
+2). 0X -1Y
+    Error :
+    -10cm x , -3 cm y
+3). 0X 0Y
+    Error :
+    -30cm x -20cm y

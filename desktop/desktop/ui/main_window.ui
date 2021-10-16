@@ -228,7 +228,7 @@
      <string notr="true">color: rgb(238, 238, 236);</string>
     </property>
     <property name="text">
-     <string>Internal EN</string>
+     <string>Odometri</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_7">
@@ -295,7 +295,7 @@
      <string>Heading (deg)</string>
     </property>
    </widget>
-   <widget class="QLabel" name="x_internal_val">
+   <widget class="QLabel" name="pos_x">
     <property name="geometry">
      <rect>
       <x>470</x>
@@ -311,7 +311,7 @@
      <string>0</string>
     </property>
    </widget>
-   <widget class="QLabel" name="y_internal_val">
+   <widget class="QLabel" name="pos_y">
     <property name="geometry">
      <rect>
       <x>560</x>
@@ -327,7 +327,7 @@
      <string>0</string>
     </property>
    </widget>
-   <widget class="QLabel" name="th_internal_val">
+   <widget class="QLabel" name="pos_th">
     <property name="geometry">
      <rect>
       <x>660</x>
@@ -341,141 +341,13 @@
     </property>
     <property name="text">
      <string>0</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_14">
-    <property name="geometry">
-     <rect>
-      <x>660</x>
-      <y>280</y>
-      <width>41</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">color: rgb(238, 238, 236);</string>
-    </property>
-    <property name="text">
-     <string>0</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_15">
-    <property name="geometry">
-     <rect>
-      <x>450</x>
-      <y>210</y>
-      <width>341</width>
-      <height>111</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgb(136, 138, 133);</string>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_16">
-    <property name="geometry">
-     <rect>
-      <x>470</x>
-      <y>250</y>
-      <width>41</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">color: rgb(238, 238, 236);</string>
-    </property>
-    <property name="text">
-     <string>X (m)</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="y_external_val">
-    <property name="geometry">
-     <rect>
-      <x>560</x>
-      <y>280</y>
-      <width>41</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">color: rgb(238, 238, 236);</string>
-    </property>
-    <property name="text">
-     <string>0</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_18">
-    <property name="geometry">
-     <rect>
-      <x>660</x>
-      <y>250</y>
-      <width>101</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">color: rgb(238, 238, 236);</string>
-    </property>
-    <property name="text">
-     <string>Heading (deg)</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="x_external_val">
-    <property name="geometry">
-     <rect>
-      <x>470</x>
-      <y>280</y>
-      <width>41</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">color: rgb(238, 238, 236);</string>
-    </property>
-    <property name="text">
-     <string>0</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_20">
-    <property name="geometry">
-     <rect>
-      <x>460</x>
-      <y>220</y>
-      <width>101</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">color: rgb(238, 238, 236);</string>
-    </property>
-    <property name="text">
-     <string>Eksternal EN</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_21">
-    <property name="geometry">
-     <rect>
-      <x>560</x>
-      <y>250</y>
-      <width>41</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">color: rgb(238, 238, 236);</string>
-    </property>
-    <property name="text">
-     <string>Y (m)</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_22">
     <property name="geometry">
      <rect>
       <x>450</x>
-      <y>330</y>
+      <y>220</y>
       <width>341</width>
       <height>101</height>
      </rect>
@@ -513,27 +385,11 @@
      <string>SET</string>
     </property>
    </widget>
-   <widget class="QLabel" name="th_external_val">
-    <property name="geometry">
-     <rect>
-      <x>660</x>
-      <y>280</y>
-      <width>41</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">color: rgb(238, 238, 236);</string>
-    </property>
-    <property name="text">
-     <string>0</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_24">
     <property name="geometry">
      <rect>
       <x>470</x>
-      <y>340</y>
+      <y>230</y>
       <width>101</width>
       <height>20</height>
      </rect>
@@ -549,7 +405,7 @@
     <property name="geometry">
      <rect>
       <x>470</x>
-      <y>380</y>
+      <y>270</y>
       <width>41</width>
       <height>20</height>
      </rect>
@@ -577,21 +433,12 @@
    <zorder>label_8</zorder>
    <zorder>label_9</zorder>
    <zorder>label_10</zorder>
-   <zorder>x_internal_val</zorder>
-   <zorder>y_internal_val</zorder>
-   <zorder>th_internal_val</zorder>
-   <zorder>label_14</zorder>
-   <zorder>label_15</zorder>
-   <zorder>label_16</zorder>
-   <zorder>y_external_val</zorder>
-   <zorder>label_18</zorder>
-   <zorder>x_external_val</zorder>
-   <zorder>label_20</zorder>
-   <zorder>label_21</zorder>
+   <zorder>pos_x</zorder>
+   <zorder>pos_y</zorder>
+   <zorder>pos_th</zorder>
    <zorder>label_22</zorder>
    <zorder>pb_reset</zorder>
    <zorder>pb_set_heading</zorder>
-   <zorder>th_external_val</zorder>
    <zorder>label_24</zorder>
    <zorder>compass_val</zorder>
   </widget>

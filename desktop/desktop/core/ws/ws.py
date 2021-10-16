@@ -7,7 +7,7 @@ import os
 import sys
 import errno
 
-from desktop.core.ws.odom_data import Odomdata, odomdata_from_dict
+from desktop.core.ws.data import Data
 
 
 class Ws(QThread):
@@ -18,7 +18,7 @@ class Ws(QThread):
     log_file_name: str
     linear_speed = 0.2
     angular_speed = 0.6
-    robot_position = pyqtSignal(Odomdata)
+    robot_position = pyqtSignal(Data)
 
     def add_data(self, x, y):
         self.data.append({'x': float(x), 'y': float(y)})
@@ -95,22 +95,9 @@ class Ws(QThread):
         while True:
             msg = self.client.recv(150)
             msg = msg.decode('utf-8')
+            self.robot_position.emit(Data(msg))
             if self.start_logging:
-                # print(msg)
+                print(msg)
                 f = open(self.log_file_name, 'a')
                 f.write(msg)
                 f.close()
-                # msg = self.client.recv(150)
-            #     msg = msg.decode('utf-8')
-            #     print(msg)
-                # try:
-                #     obj = json.loads(msg)
-                #     odomdata = odomdata_from_dict(obj)
-                #     self.robot_position.emit(odomdata)
-                #     f = open(self.log_file_name, 'a')
-                #     f.write(
-                #         f'{time()},'+f'{odomdata.sc},{odomdata.data.x},{odomdata.data.y},{odomdata.data.w}'+'\n')
-                #     f.close()
-                # except Exception as e:
-                #     # print(e)
-                #     pass
