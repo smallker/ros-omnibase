@@ -530,7 +530,7 @@ void initWebSocket(void *parameters)
             float left = m1.speed_ms * 20.00;
             float right = m2.speed_ms * 20.00;
             float theta = base.radToDeg(base.pos_th);
-            // client.printf("%d,%.3f,%.3f,%.2f,%.2f,%.2f,%d\n",millis(),left, right,base.pos_x,base.pos_y,theta,heading);
+            client.printf("%d,%.3f,%.3f,%.2f,%.2f,%.2f,%d\n",millis(),left, right,base.pos_x,base.pos_y,theta,heading);
             // StaticJsonDocument<200> doc;
 
             // doc["type"] = 1;
@@ -643,6 +643,8 @@ void setup()
   // attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
   m1.pid(7, 0, 1, 255);
   m2.pid(9, 0, 1, 255);
+  // m1.setPidThreshold(0, 100);
+  // m2.setPidThreshold(0, 100);
   // lin_pid.setLimit(0.1);
   // lin_pid.windup = 0.01;
   m1.setWheelDiameter(D_WHEEL);
