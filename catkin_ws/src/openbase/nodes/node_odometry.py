@@ -8,8 +8,18 @@ from tf.broadcaster import TransformBroadcaster
 from tf.transformations import quaternion_from_euler
 from geometry_msgs.msg import Pose2D, Point
 from visualization_msgs.msg import Marker
+
+
 class OdometryNode:
     seq = 0
+
+    '''
+    Inisialisasi OdometryNode
+    - publish ke topik /real/odom
+    - publish ke topik /real/marker
+    - subscribe ke topik /real/pose_data
+    - subscribe ke topik /reset_pos
+    '''
     def main(self):
         rospy.init_node('node_odometry', anonymous=True)
         self.tf_pub = TransformBroadcaster()
@@ -25,10 +35,19 @@ class OdometryNode:
         while not rospy.is_shutdown():
             rate.sleep()
     
+
+    '''
+    Terpanggil saat ada topik /reset_pos dengan tipe
+    data std_msgs/Empty
+    Berfungsi untuk mereset marker yang ada di peta
+    '''
     def on_reset_pos(self, msg):
         self.marker.points.clear()
         self.marker_pub.publish(self.marker)
 
+    '''
+    Berfungsi untuk mengatur tampilan marker
+    '''
     def marker_setting(self):
         self.marker = Marker()
         self.marker.header.frame_id = "odom"
@@ -57,6 +76,12 @@ class OdometryNode:
         line_point.y = 0
         self.marker.points.append(line_point)
 
+
+    '''
+    Terpanggil saat robot mengirimkan data posisi
+    Data Pose2D akan dikonversi ke tipe data nav_msgs/Odometry
+    sehingga dapat ditampilkan oleh RViz
+    '''
     def on_pose_data(self, pose:Pose2D):
         now = rospy.get_rostime()
 

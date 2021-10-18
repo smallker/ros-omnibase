@@ -4,6 +4,10 @@ from geometry_msgs.msg import Point, PoseStamped
 from std_msgs.msg import Empty
 
 class NodeMarker:
+
+    '''
+    Inisialisasi node marker
+    '''
     def __init__(self) -> None:
         rospy.init_node('node_marker')
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.on_clicked_point)
@@ -14,6 +18,10 @@ class NodeMarker:
         while not rospy.is_shutdown():
             rospy.sleep(0.1)
 
+    '''
+    Berfungsi untuk mengubah warna marker menjadi merah
+    ketika kendali posisi dimulai
+    '''
     def on_marker_follower(self, msg):
         # self.marker color
         self.marker.color.a = 0.7
@@ -22,6 +30,10 @@ class NodeMarker:
         self.marker.color.b = 0.0
         self.publisher.publish(self.marker)
 
+    '''
+    Membuat marker baru ketika operator memilih
+    titik pada peta
+    '''
     def on_clicked_point(self, msg:PoseStamped):
         line_point = Point()
         line_point.x = msg.pose.position.x
@@ -33,6 +45,13 @@ class NodeMarker:
         self.marker.color.b = 0.0
         self.publisher.publish(self.marker)
     
+
+    '''
+    Pengaturan warna marker
+    LINE_STRIP untuk tipe marker garis
+    warna diatur ke warna kuning saat pengguna
+    memilih titik di peta
+    '''
     def marker_setting(self):
         self.marker = Marker()
         self.marker.header.frame_id = "odom"
@@ -60,6 +79,11 @@ class NodeMarker:
         line_point.x = 0
         line_point.y = 0
         self.marker.points.append(line_point)
+    
+    '''
+    Saat fungsi dipanggil maka akan menghapus semua
+    marker yang ada di peta
+    '''
     def on_reset_pos(self, msg):
         self.marker.points = []
         line_point = Point()
