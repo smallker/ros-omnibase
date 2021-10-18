@@ -1,4 +1,9 @@
 #include "main.h"
+
+/*
+  Program interupsi pin encoder
+  kanal A motor 1
+*/
 void ICACHE_RAM_ATTR EN1_ISR()
 {
   portENTER_CRITICAL(&mux);
@@ -6,6 +11,10 @@ void ICACHE_RAM_ATTR EN1_ISR()
   portEXIT_CRITICAL(&mux);
 }
 
+/*
+  Program interupsi pin encoder
+  kanal A motor 1
+*/
 void ICACHE_RAM_ATTR EN2_ISR()
 {
   portENTER_CRITICAL(&mux);
@@ -13,6 +22,10 @@ void ICACHE_RAM_ATTR EN2_ISR()
   portEXIT_CRITICAL(&mux);
 }
 
+/*
+  Program interupsi pin encoder
+  kanal A motor 1
+*/
 void ICACHE_RAM_ATTR EN3_ISR()
 {
   portENTER_CRITICAL(&mux);
@@ -20,6 +33,10 @@ void ICACHE_RAM_ATTR EN3_ISR()
   portEXIT_CRITICAL(&mux);
 }
 
+/*
+  Mengatur kecepatan gerak robot melalui terminal teleop
+  Digunakan untuk pengujian gerak robot
+*/
 void onCmdVel(const geometry_msgs::Twist &msg_data)
 {
   vel_data = msg_data;
@@ -27,6 +44,11 @@ void onCmdVel(const geometry_msgs::Twist &msg_data)
   last_command_time = millis();
 }
 
+/*
+  Mengatur ulang semua kendali dan posisi robot
+  Akan dijalankan ketika mendapat perintah dari topik
+  /reset dengan menekan tombol '3' di terminal Teleop
+*/
 void onResetPose(const std_msgs::Empty &msg_data)
 {
   m1.encoder_tick_acc = 0;
@@ -44,19 +66,23 @@ void onResetPose(const std_msgs::Empty &msg_data)
   pose_control_begin = false;
 }
 
-void onMoveBaseToGoal(const geometry_msgs::PoseStamped &msg_data)
-{
-  goal_x.setpoint = msg_data.pose.position.x;
-  goal_y.setpoint = msg_data.pose.position.y;
-  goal_w.setpoint = 0;
-  pose_control_begin = true;
-}
-
+/*
+  Menerima data marker setiap ada penandaan posisi
+  baru di RViz dan menyimpannya di variabel marker_data
+  untuk digunakan sebagai kendali posisi multipoint
+*/
 void onMarkerSet(const visualization_msgs::Marker &msg_data)
 {
   marker_data = msg_data;
 }
 
+/*
+  Untuk memulai menjalankan kendali posisi
+  ketika menerima perintah dari topik
+  /marker_follower
+  Untuk mengirimkan perintah, tekan tombol 2 pada
+  terminal Teleop
+*/
 void onMarkerFollower(const std_msgs::Empty &msg_data)
 {
   DEBUG.println("MARKER FOLLOWER STARTED");
@@ -83,6 +109,12 @@ void blink(void *parameters)
 /*
   Inisialisasi ros node
   Mendaftarkan publisher dan subscriber
+  - vel_sub adalah topik kendali manual robot menggunakan teleop
+  - rst_pos_sub adalah topik untuk mereset sistem kendali dan posisi robot
+  - marker_sub adalah topik untuk menerima data setpoint multipoint dari
+    perintah masukan berupa data marker di RViz
+  - marker_follower_sub adalah topik untuk memulai kendali posisi multipoint
+  - pose_pub adalah topik untuk mengirimkan data posisi robot sekarang
 */
 void initNode(void *parameters)
 {
@@ -101,7 +133,6 @@ void initNode(void *parameters)
       nh.initNode();
       nh.subscribe(vel_sub);
       nh.subscribe(rst_pos_sub);
-      // nh.subscribe(goal_sub);
       nh.subscribe(marker_sub);
       nh.subscribe(marker_follower_sub);
       nh.advertise(pose_pub);
@@ -117,8 +148,9 @@ void initNode(void *parameters)
 
 /*
   Mempublish message pada topik ROS
-  - heading_pub untuk mengirim data kompas
-  - encoder_pub untuk mengirim data rotary encoder
+  pose_pub digunakan untuk mengirim data
+  posisi robot saat ini dalam x (meter), y(meter),
+  theta(radian)
 */
 void publishMessage(void *parameter)
 {
@@ -136,7 +168,8 @@ void publishMessage(void *parameter)
 /*
   Data kompas akan terus increment/decrement ketika robot terus
   menerus berputar. Kompas perlu dikalibrasi terlebih dahulu
-  menggunakan contoh program pada library
+  menggunakan contoh program pada library. Data yang dihasilkan
+  masih dalam format degree, bukan radian
 */
 void readCompass(void *parameters)
 {
@@ -169,7 +202,6 @@ void readCompass(void *parameters)
       heading = heading + (now - last_compass_reading);
 
     last_compass_reading = now;
-    heading_data.data = heading;
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
 }
@@ -199,8 +231,12 @@ void moveBase(void *parameters)
 }
 
 /*
-  Menghitung RPM motor, jeda kalkulasi
-  20 ms
+  Menghitung RPM motor lalu mengkonversinya
+  ke satuan meter/detik, kalkulasi diatur setiap
+  5 ms. Fungsi Kinematic::calculatePosition
+  berfungsi untuk menghitung posisi robot sekarang
+  dengan rumus odometri. Penjelasan rumus ada didalam
+  pustaka kinematic.cpp
 */
 void countRpm(void *parameters)
 {
@@ -211,9 +247,6 @@ void countRpm(void *parameters)
     m2.calculateRpm(sampling_time_ms);
     m3.calculateRpm(sampling_time_ms);
     base.calculatePosition(heading);
-    // DEBUG.printf("x : %.2f y : %.2f w : %.2f\n", base.x, base.y, base.w);
-    // DEBUG.printf("m1 : %.3f m2 : %.3f m3 : %.3f\n", m1.speed_ms, m2.speed_ms, m3.speed_ms);
-    // vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
     vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
   }
 }
@@ -235,10 +268,11 @@ void odometry(void *parameters)
 }
 
 /*
-  Kendali PID posisi robot
-  dengan umpan balik
-  posisi robot saat ini
-
+  Kendali PID posisi robot dengan umpan balik
+  posisi robot saat ini. Program akan membaca
+  array yang didapat dari topik ROS markers
+  yang disimpan di variabel marker_data
+  sampai array terakhir
 */
 void poseControl(void *parameters)
 {
@@ -273,21 +307,39 @@ void poseControl(void *parameters)
 
 void setup()
 {
-  DEBUG.begin(115200);
-  analogWriteFrequency(10000);
+  DEBUG.begin(115200); // Memulai koneksi serial
+  analogWriteFrequency(10000); // Atur frekuensi PWM
+
+  /*
+    Mengatur program yang akan digunakan sebagai
+    layanan interupsi eksternal
+  */
   attachInterrupt(digitalPinToInterrupt(m1.en_a), EN1_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m2.en_a), EN2_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(m3.en_a), EN3_ISR, FALLING);
+
+  /*
+    Pengaturan nilai PID untuk masing-masing motor
+  */
   m1.pid(7, 0.05, 1, 255);
   m2.pid(7, 0.05, 1, 255);
   m3.pid(6, 0.05, 1, 255);
+
+  /*
+    Fungsi Kinematic::setMotor akan otomatis
+    menyesuaikan kinematika dengan jumlah objek
+    motor yang dimasukkan
+  */
   base.setMotor(m1, m2, m3);
-  // Spawn task RTOS
-  // xTaskCreatePinnedToCore(fungsi, "nama fungsi", alokasi memori, prioritas, task handle, core);
-  // ESP32 memiliki 3 core, yaitu core 0, core 1, dan ULP
-  // Sebisa mungkin prioritas task disamakan untuk menghindari crash
-  // Task yang paling sering dijalankan diberikan prioritas paling tinggi
-  // sem_i2c = xSemaphoreCreateMutex();
+
+  /*
+    Menjalankan task RTOS
+    xTaskCreatePinnedToCore(fungsi, "nama fungsi", alokasi memori, prioritas, task handle, core);
+    ESP32 memiliki 3 core, yaitu core 0, core 1, dan ULP
+    Sebisa mungkin prioritas task disamakan untuk menghindari crash
+    Task yang paling sering dijalankan diberikan prioritas paling tinggi
+    sem_i2c = xSemaphoreCreateMutex();
+  */
   xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);             // Pengaturan akses poin
   xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);                      // Test apakah RTOS dapat berjalan
   xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);                      // Inisialisasi ros node

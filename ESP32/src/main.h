@@ -45,8 +45,8 @@ TaskHandle_t rpm_task;
 TaskHandle_t odometry_task;
 TaskHandle_t imu_task;
 TaskHandle_t pose_control_task;
-// Task RTOS
 
+// Task RTOS
 void blink(void *parameters);
 void initNode(void *parameters);
 void publishMessage(void *parameter);
@@ -73,6 +73,12 @@ Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B);
 // inisialisasi objek kinematik
 Kinematic base(BASE_OMNI_Y);
 
+/*
+    Robot dapat bergerak dalam 3DOF
+    goal_x merupakan arah robot dalam sumbu X
+    goal_y merupakan arah robot dalam sumbu Y
+    goal_w merupakan arah gerak memutar robot
+*/
 Pid goal_x = Pid(5, 0, 1);
 Pid goal_y = Pid(5, 0, 1);
 Pid goal_w = Pid(7, 0, 0);

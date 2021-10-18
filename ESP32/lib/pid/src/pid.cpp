@@ -1,5 +1,7 @@
 #include "pid.h"
-
+/*
+    Mengatur nilai Kp, Ki, dan Kd
+*/
 Pid::Pid(float kp, float ki, float kd)
 {
     this->kp = kp;
@@ -7,6 +9,10 @@ Pid::Pid(float kp, float ki, float kd)
     this->kd = kd;
 }
 
+/*
+    Menghitung nilai PWM berdasarkan error yang ada
+    (error titik pengesetan, error integral, dan error derivatif)
+*/
 float Pid::compute(float now)
 {
     if (i_err > windup)
@@ -24,7 +30,9 @@ float Pid::compute(float now)
         return result < - limit ? - limit : result;
     }
 }
-
+/*
+    Mengatur ulang semua perhitungan error
+*/
 void Pid::reset()
 {
     d_err = 0;
@@ -32,7 +40,9 @@ void Pid::reset()
     last_err = 0;
     setpoint = 0;
 }
-
+/*
+    Mengubah nilai Kp, Ki, Kd
+*/
 void Pid::setPid(float kp, float ki, float kd)
 {
     this->kp = kp;
