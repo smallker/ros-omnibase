@@ -68,7 +68,7 @@ void Kinematic::calculatePosition()
     if (base == BASE_DIFF_DRIVE)
     {
 
-        float heading = degToRad(((radToDeg(pos_th))));
+        float heading = pos_th;
         float leftTravel = m1->speed_ms;
         float rightTravel = m2->speed_ms;
         float deltaTravel = (rightTravel + leftTravel) / 2;

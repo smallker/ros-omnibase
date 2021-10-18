@@ -20,7 +20,7 @@
 #define M2_PWM 19
 
 // kode EN untuk pin encoder
-#define INTERNAL_EN
+// #define INTERNAL_EN
 #if defined(INTERNAL_EN)
 #define EN1_A   35
 #define EN1_B   26

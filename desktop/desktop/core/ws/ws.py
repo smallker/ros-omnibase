@@ -95,7 +95,10 @@ class Ws(QThread):
         while True:
             msg = self.client.recv(150)
             msg = msg.decode('utf-8')
-            self.robot_position.emit(Data(msg))
+            try:
+                self.robot_position.emit(Data(msg))
+            except:
+                pass
             if self.start_logging:
                 print(msg)
                 f = open(self.log_file_name, 'a')
