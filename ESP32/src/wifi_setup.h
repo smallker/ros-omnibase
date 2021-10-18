@@ -2,6 +2,14 @@
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+
+/*
+    #define AP berfungsi untuk mendefinisikan
+    ESP32 sebagai akses poin, untuk menjadikan
+    ESP32 sebagai client, cukup comment pada baris
+    tsb lalu ganti SSID, PASS, dan IP Address sesuai
+    pengaturan jaringan yang akan digunakan 
+*/
 #define SSID "openbase"
 #define PASS "openbase"
 
@@ -28,6 +36,11 @@ void wifiSetup(void *parameters)
     Serial.println("IP : " + (String)WiFi.localIP().toString());
 #endif
 
+/*
+    Menyalakan fungsi OTA pada ESP32 sehingga
+    ESP32 dapat di program melalui wifi
+    NB: Setup awal harus menggunakan kabel
+*/
     ArduinoOTA
         .onStart([]()
                  {
