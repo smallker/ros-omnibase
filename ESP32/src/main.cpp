@@ -197,7 +197,7 @@ void readCompass(void *parameters)
   for (;;)
   {
     compass.read();
-    int now = compass.getAzimuth();
+    int now = map(compass.getAzimuth(), 0, 359, 359, 0);
     if (abs(now - last_compass_reading) > 300)
     {
       int offset;
@@ -358,10 +358,10 @@ void setup()
     Task yang paling sering dijalankan diberikan prioritas paling tinggi
     sem_i2c = xSemaphoreCreateMutex();
   */
-  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);   // Pengaturan akses poin
-  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);            // Test apakah RTOS dapat berjalan
-  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);            // Inisialisasi ros node
-  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1); // Task publish ros messsage
+  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);             // Pengaturan akses poin
+  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);                      // Test apakah RTOS dapat berjalan
+  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);                      // Inisialisasi ros node
+  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);           // Task publish ros messsage
   xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);               // Membaca sensor kompas
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);                    // Menggerakkan base robot
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);                       // Menghitung RPM
