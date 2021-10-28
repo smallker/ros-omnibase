@@ -80,3 +80,16 @@ void Kinematic::calculatePosition(float heading)
     x += (cos(w) * vmx) - (sin(w) * vmy);
     y += (sin(w) * vmx) + (cos(w) * vmy);
 }
+
+void Kinematic::calculatePosition()
+{
+    float v1 = (m1->speed_ms);
+    float v2 = (m2->speed_ms);
+    float v3 = (m3->speed_ms);
+    float vmx = (2 * v2 - v1 - v3) / 3;
+    float vmy = ((sqrt3 * v3) - (sqrt3 * v1)) / 3;
+    float vth = (m1->speed_ms + m2->speed_ms + m3->speed_ms)/ 3 * (r_base * 2);
+    w += vth;
+    x += (cos(w) * vmx) - (sin(w) * vmy);
+    y += (sin(w) * vmx) + (cos(w) * vmy);
+}
