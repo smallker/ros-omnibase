@@ -8,6 +8,9 @@
 // Atur waktu tunda pengiriman data ke ROS
 #define PUBLISH_DELAY_MS 50
 
+// Uncomment untuk menggunakan ROS serial
+// Comment jika ingin menggunakan ROS TCP WiFi
+// #define ROS_USE_SERIAL
 /*
     Karena perangkat lunak yang digunakan mendukung OTA,
     untuk pengaturan awal dapat dengan mengkoneksikan PC
@@ -65,8 +68,11 @@ geometry_msgs::Pose2D pose_data;
 visualization_msgs::Marker marker_data;
 
 // Inisialisasi ros node
-ros::NodeHandle_<WiFiHardware> nh;
-
+#if defined(ROS_USE_SERIAL)
+ros::NodeHandle nh;
+#else
+ros::NodeHandle_ <WiFiHardware> nh;
+#endif
 // Inisialisasi ros publisher
 ros::Publisher pose_pub("/real/pose_data", &pose_data);
 

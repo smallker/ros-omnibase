@@ -87,8 +87,9 @@ void onMarkerFollower(const std_msgs::Empty &msg_data)
 {
   DEBUG.println("MARKER FOLLOWER STARTED");
   finish = false;
-  for(int i =0 ; i< marker_data.points_length; i++){
-    DEBUG.printf("X : %.f Y : %.f Z : %.f\n",marker_data.points[i].x, marker_data.points[i].y, marker_data.points[i].z);
+  for (int i = 0; i < marker_data.points_length; i++)
+  {
+    DEBUG.printf("X : %.f Y : %.f Z : %.f\n", marker_data.points[i].x, marker_data.points[i].y, marker_data.points[i].z);
   }
 }
 /*
@@ -116,10 +117,27 @@ void blink(void *parameters)
   - marker_follower_sub adalah topik untuk memulai kendali posisi multipoint
   - pose_pub adalah topik untuk mengirimkan data posisi robot sekarang
 */
+
+void setupSubscriberAndPublisher()
+{
+  nh.initNode();
+  nh.subscribe(vel_sub);
+  nh.subscribe(rst_pos_sub);
+  nh.subscribe(marker_sub);
+  nh.subscribe(marker_follower_sub);
+  nh.advertise(pose_pub);
+  heading = 0;
+  is_ros_ready = true;
+}
+
 void initNode(void *parameters)
 {
+#if defined(ROS_USE_SERIAL)
+  setupSubscriberAndPublisher();
+#endif
   for (;;)
   {
+#if !defined(ROS_USE_SERIAL)
     while (true)
     {
       vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -130,18 +148,15 @@ void initNode(void *parameters)
     }
     if (client.connected() != 1)
     {
-      nh.initNode();
-      nh.subscribe(vel_sub);
-      nh.subscribe(rst_pos_sub);
-      nh.subscribe(marker_sub);
-      nh.subscribe(marker_follower_sub);
-      nh.advertise(pose_pub);
-      heading = 0;
+      setupSubscriberAndPublisher();
     }
     if (client.connected() == 1)
     {
       nh.spinOnce();
     }
+#else
+    nh.spinOnce();
+#endif
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
 }
@@ -156,9 +171,8 @@ void publishMessage(void *parameter)
 {
   for (;;)
   {
-    if (client.connected() == 1)
+    if (is_ros_ready)
     {
-      is_ros_ready = true;
       pose_pub.publish(&pose_data);
     }
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
@@ -227,7 +241,7 @@ void moveBase(void *parameters)
     else
       base.setSpeed(0, 0, 0);
     vTaskDelay(10);
-  } 
+  }
 }
 
 /*
@@ -288,7 +302,8 @@ void poseControl(void *parameters)
     }
     if (abs(goal_x.setpoint - base.x) < 0.01 and abs(goal_y.setpoint - base.y) < 0.01 and abs(goal_w.setpoint - base.w) < 0.01)
     {
-      if (marker_array_position < marker_data.points_length){
+      if (marker_array_position < marker_data.points_length)
+      {
         goal_x.reset();
         goal_y.reset();
         goal_w.reset();
@@ -297,7 +312,8 @@ void poseControl(void *parameters)
         goal_w.setpoint = 0;
         marker_array_position++;
       }
-      else{
+      else
+      {
         finish = true;
         marker_array_position = 0;
       }
@@ -307,7 +323,9 @@ void poseControl(void *parameters)
 
 void setup()
 {
+#if !defined(ROS_USE_SERIAL)
   DEBUG.begin(115200); // Memulai koneksi serial
+#endif
   analogWriteFrequency(10000); // Atur frekuensi PWM
 
   /*
@@ -340,10 +358,10 @@ void setup()
     Task yang paling sering dijalankan diberikan prioritas paling tinggi
     sem_i2c = xSemaphoreCreateMutex();
   */
-  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);             // Pengaturan akses poin
-  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);                      // Test apakah RTOS dapat berjalan
-  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);                      // Inisialisasi ros node
-  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);           // Task publish ros messsage
+  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);   // Pengaturan akses poin
+  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);            // Test apakah RTOS dapat berjalan
+  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);            // Inisialisasi ros node
+  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1); // Task publish ros messsage
   xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);               // Membaca sensor kompas
   xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);                    // Menggerakkan base robot
   xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);                       // Menghitung RPM
