@@ -16,10 +16,11 @@
 #define EN1_A   26
 #define EN1_B   35
 #define EN1_PPR 700
+#define D_WHEEL 0.06
 
 const int sampling_time_ms = 5;
 
-Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B, EN1_PPR);
+Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B, EN1_PPR, D_WHEEL);
 
 void ICACHE_RAM_ATTR EN1_ISR()
 {
@@ -35,7 +36,7 @@ void setup(){
 void loop(){
   m1.speed(30); // 30 RPM clockwise
   m1.calculateRpm(sampling_time_ms);
-  Serial.println(m1.speed_ms);
+  Serial.println(m1.rpm); // Harus bernilai 30 positif
   delay(sampling_time_ms);
 }
 ```
