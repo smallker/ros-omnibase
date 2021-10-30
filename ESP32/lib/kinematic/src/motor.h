@@ -41,8 +41,7 @@ public:
     volatile int encoder_tick;
     volatile long encoder_tick_acc;
     Motor(byte ma_pin, byte mb_pin, byte pwm_pin);
-    Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b);
-    Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b, int ppr);
+    Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b, int ppr, float d_wheel);
     void pid(float kp, float ki, float kd , float windup);
     void speed(float target);
     void brake();

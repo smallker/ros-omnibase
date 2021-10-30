@@ -18,32 +18,9 @@ Motor::Motor(byte ma_pin, byte mb_pin, byte pwm_pin)
     pinMode(this->pwm_pin, OUTPUT);
     // setPwmFrequency();
 }
-/*
-    Mode dengan encoder
-    ma_pin   -> Motor A pin
-    mb_pin   -> Motor B pin
-    pwm_pin -> Motor PWM pin
-    en_a    -> Encoder channel A
-    en_b    -> Encoder channel B
-*/
-Motor::Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b)
-{
-    this->ma_pin = ma_pin;
-    this->mb_pin = mb_pin;
-    this->pwm_pin = pwm_pin;
-    this->en_a = en_a;
-    this->en_b = en_b;
-    pinMode(this->ma_pin, OUTPUT);
-    pinMode(this->mb_pin, OUTPUT);
-    pinMode(this->pwm_pin, OUTPUT);
-    pinMode(this->en_a, INPUT_PULLUP);
-    pinMode(this->en_b, INPUT_PULLUP);
-    digitalWrite(this->pwm_pin, LOW);
-    // setPwmFrequency();
-}
 
 /*
-    Mode dengan encoder dengan setting manual PPR
+    Mode dengan encoder dengan setting PPR dan diameter roda
     PPR default 135 (PG-36)
     ma_pin   -> Motor A pin
     mb_pin   -> Motor B pin
@@ -51,7 +28,7 @@ Motor::Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b)
     en_a    -> Encoder channel A
     en_b    -> Encoder channel B
 */
-Motor::Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b, int ppr)
+Motor::Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b, int ppr, float d_wheel)
 {
     this->ma_pin = ma_pin;
     this->mb_pin = mb_pin;
@@ -59,6 +36,7 @@ Motor::Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b, int p
     this->en_a = en_a;
     this->en_b = en_b;
     this->ppr = ppr;
+    this->d_wheel = d_wheel;
     pinMode(this->ma_pin, OUTPUT);
     pinMode(this->mb_pin, OUTPUT);
     pinMode(this->pwm_pin, OUTPUT);
@@ -66,6 +44,7 @@ Motor::Motor(byte ma_pin, byte mb_pin, byte pwm_pin, byte en_a, byte en_b, int p
     pinMode(this->en_b, INPUT_PULLUP);
     digitalWrite(this->pwm_pin, LOW);
 }
+
 /*
     Kp, Ki, Kd, Windup
     
