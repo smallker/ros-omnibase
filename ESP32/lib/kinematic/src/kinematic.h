@@ -20,14 +20,15 @@ private:
     double sqrt3 = 1.732050807568877193176604123436845839023590087890625;
     float d_wheel = 0.06;
 public:
-    float x, y, w;
+    float pos_x; // dalam satuan meter
+    float pos_y; // dalam satuan meter
+    float pos_th; // dalam satuan radian
     Kinematic(Base base);
     void setMotor(Motor &m1, Motor &m2);
     void setMotor(Motor &m1, Motor &m2, Motor &m3);
     void setMotor(Motor &m1, Motor &m2, Motor &m3, Motor &m4);
-    void setSpeed(float linear_x, float linear_y, float linear_z, float angular_x, float angular_y, float angular_z);
     void setSpeed(float linear_x, float linear_y, float angular_z);
-    void calculatePosition(float heading_rad);
+    void calculatePosition(float heading_deg);
     void calculatePosition();
 };
 

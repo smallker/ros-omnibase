@@ -40,7 +40,6 @@ void ICACHE_RAM_ATTR EN3_ISR()
 void onCmdVel(const geometry_msgs::Twist &msg_data)
 {
   vel_data = msg_data;
-  sp_heading = heading;
   last_command_time = millis();
 }
 
@@ -54,16 +53,15 @@ void onResetPose(const std_msgs::Empty &msg_data)
   m1.encoder_tick_acc = 0;
   m2.encoder_tick_acc = 0;
   m3.encoder_tick_acc = 0;
-  heading = 0;
-  base.x = 0;
-  base.y = 0;
+  heading_deg = 0;
+  base.pos_x = 0;
+  base.pos_y = 0;
   goal_x.setpoint = 0;
   goal_y.setpoint = 0;
   goal_w.setpoint = 0;
   goal_x.reset();
   goal_y.reset();
   goal_w.reset();
-  pose_control_begin = false;
 }
 
 /*
@@ -126,7 +124,7 @@ void setupSubscriberAndPublisher()
   nh.subscribe(marker_sub);
   nh.subscribe(marker_follower_sub);
   nh.advertise(pose_pub);
-  heading = 0;
+  heading_deg = 0;
   is_ros_ready = true;
 }
 
@@ -190,10 +188,10 @@ void readCompass(void *parameters)
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   QMC5883LCompass compass;
   compass.init();
-  compass.setCalibration(-1112, 1340, -1485, 966, -950, 0);
+  compass.setCalibration(-622, 682, -1491, 341, 0, 612);
   compass.read();
   last_compass_reading = compass.getAzimuth();
-  heading = last_compass_reading;
+  heading_deg = last_compass_reading;
   for (;;)
   {
     compass.read();
@@ -204,16 +202,16 @@ void readCompass(void *parameters)
       if (now - last_compass_reading < 0)
       {
         offset = (360 - last_compass_reading) + now;
-        heading = heading + offset;
+        heading_deg = heading_deg + offset;
       }
       else
       {
         offset = (360 - now) + last_compass_reading;
-        heading = heading - (last_compass_reading + offset);
+        heading_deg = heading_deg - (last_compass_reading + offset);
       }
     }
     else
-      heading = heading + (now - last_compass_reading);
+      heading_deg = heading_deg + (now - last_compass_reading);
 
     last_compass_reading = now;
     vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
@@ -231,11 +229,11 @@ void moveBase(void *parameters)
 {
   for (;;)
   {
-    if (WiFi.softAPgetStationNum() > 0 && (millis() - last_command_time < 500))
+    if (millis() - last_command_time < 500)
     {
-      float lin_x = vel_data.linear.y;
+      float lin_x = -vel_data.linear.y;
       float lin_y = vel_data.linear.x;
-      float ang_z = -1 * vel_data.angular.z;
+      float ang_z = vel_data.angular.z;
       base.setSpeed(lin_x, lin_y, ang_z);
     }
     else
@@ -252,7 +250,7 @@ void moveBase(void *parameters)
   dengan rumus odometri. Penjelasan rumus ada didalam
   pustaka kinematic.cpp
 */
-void countRpm(void *parameters)
+void odometry(void *parameters)
 {
   const int sampling_time_ms = 5;
   for (;;)
@@ -260,24 +258,11 @@ void countRpm(void *parameters)
     m1.calculateRpm(sampling_time_ms);
     m2.calculateRpm(sampling_time_ms);
     m3.calculateRpm(sampling_time_ms);
-    base.calculatePosition(heading);
+    base.calculatePosition(heading_deg);
+    pose_data.x = base.pos_x;
+    pose_data.y = base.pos_y;
+    pose_data.theta = base.pos_th;
     vTaskDelay(sampling_time_ms / portTICK_PERIOD_MS);
-  }
-}
-
-/*
-  Membaca data encoder terkini dan
-  mengcopy nilainya ke data pada topik
-  encoder
-*/
-void odometry(void *parameters)
-{
-  for (;;)
-  {
-    pose_data.x = base.x;
-    pose_data.y = base.y;
-    pose_data.theta = base.w;
-    vTaskDelay(PUBLISH_DELAY_MS / portTICK_PERIOD_MS);
   }
 }
 
@@ -294,13 +279,13 @@ void poseControl(void *parameters)
   {
     if (!finish)
     {
-      float lin_x = goal_x.compute(base.x);
-      float lin_y = goal_y.compute(base.y);
-      float ang_z = goal_w.compute(base.w);
-      base.setSpeed(-lin_x, lin_y, -ang_z);
+      float lin_x = goal_x.compute(base.pos_x);
+      float lin_y = goal_y.compute(base.pos_y);
+      float ang_z = goal_w.compute(base.pos_th);
+      base.setSpeed(lin_x, lin_y, ang_z);
       vTaskDelay(10 / portTICK_PERIOD_MS);
     }
-    if (abs(goal_x.setpoint - base.x) < 0.01 and abs(goal_y.setpoint - base.y) < 0.01 and abs(goal_w.setpoint - base.w) < 0.01)
+    if (abs(goal_x.setpoint - base.pos_x) < 0.01 and abs(goal_y.setpoint - base.pos_y) < 0.01 and abs(goal_w.setpoint - base.pos_th) < 0.01)
     {
       if (marker_array_position < marker_data.points_length)
       {
@@ -339,9 +324,9 @@ void setup()
   /*
     Pengaturan nilai PID untuk masing-masing motor
   */
-  m1.pid(7, 0.05, 1, 255);
-  m2.pid(7, 0.05, 1, 255);
-  m3.pid(6, 0.05, 1, 255);
+  m1.pid(2, 0.05, 1, 255);
+  m2.pid(0.5, 0.05, 1, 255);
+  m3.pid(5, 0.05, 1, 255);
 
   /*
     Fungsi Kinematic::setMotor akan otomatis
@@ -358,15 +343,14 @@ void setup()
     Task yang paling sering dijalankan diberikan prioritas paling tinggi
     sem_i2c = xSemaphoreCreateMutex();
   */
-  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);             // Pengaturan akses poin
-  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);                      // Test apakah RTOS dapat berjalan
-  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);                      // Inisialisasi ros node
-  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub, 1);           // Task publish ros messsage
-  xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &cmp_task, 1);               // Membaca sensor kompas
-  xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);                    // Menggerakkan base robot
-  xTaskCreatePinnedToCore(countRpm, "rpm", 5000, NULL, 2, &rpm_task, 1);                       // Menghitung RPM
-  xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);             // Set data untuk message MotorEncoder
-  xTaskCreatePinnedToCore(poseControl, "pose control", 10000, NULL, 2, &pose_control_task, 1); // Set data untuk message MotorEncoder
+  xTaskCreatePinnedToCore(wifiSetup, "wifi setup", 10000, NULL, 5, &wifi_task, 0);        // Pengaturan akses poin
+  xTaskCreatePinnedToCore(blink, "blink", 1000, NULL, 2, &blink_task, 1);                 // Test apakah RTOS dapat berjalan
+  xTaskCreatePinnedToCore(initNode, "node", 5000, NULL, 5, &ros_task, 0);                 // Inisialisasi ros node
+  xTaskCreatePinnedToCore(publishMessage, "publisher", 10000, NULL, 2, &ros_pub_task, 1); // Task publish ros messsage
+  xTaskCreatePinnedToCore(readCompass, "compass", 10000, NULL, 2, &compass_task, 1);      // Membaca sensor kompas
+  xTaskCreatePinnedToCore(moveBase, "base", 5000, NULL, 2, &motor_task, 1);               // Menggerakkan base robot melalui perintah cmd_vel
+  xTaskCreatePinnedToCore(odometry, "odometry", 5000, NULL, 2, &odometry_task, 1);             // Menghitung posisi robot saat ini
+  xTaskCreatePinnedToCore(poseControl, "pose control", 10000, NULL, 2, &pose_control_task, 1); // Mengontrol pergerakan robot dengan kendali PID
 }
 void loop()
 {
