@@ -190,7 +190,7 @@ void readCompass(void *parameters)
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   QMC5883LCompass compass;
   compass.init();
-  compass.setCalibration(-1112, 1340, -1485, 966, -950, 0);
+  compass.setCalibration(-622, 682, -1491, 341, 0, 612);
   compass.read();
   last_compass_reading = compass.getAzimuth();
   heading = last_compass_reading;
