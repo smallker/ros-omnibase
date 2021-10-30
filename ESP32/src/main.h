@@ -33,6 +33,8 @@
 #define EN3_B   39
 #define EN3_PPR 800
 
+#define D_WHEEL 0.06
+
 // Digunakan mematikan interrupt termasuk RTOS
 // saat eksternal interrupt aktif
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
@@ -66,9 +68,9 @@ volatile unsigned long last_command_time;
 volatile int marker_array_position;
 
 // inisialisasi objek motor
-Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B, EN1_PPR);
-Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B, EN2_PPR);
-Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B, EN3_PPR);
+Motor m1(M1_A, M1_B, M1_PWM, EN1_A, EN1_B, EN1_PPR, D_WHEEL);
+Motor m2(M2_A, M2_B, M2_PWM, EN2_A, EN2_B, EN2_PPR, D_WHEEL);
+Motor m3(M3_A, M3_B, M3_PWM, EN3_A, EN3_B, EN3_PPR, D_WHEEL);
 
 // inisialisasi objek kinematik
 Kinematic base(BASE_OMNI_Y);

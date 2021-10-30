@@ -33,8 +33,8 @@ void wifiSetup(void *parameters)
         Serial.print(".");
         delay(1000);
     }
-    Serial.println("IP : " + (String)WiFi.localIP().toString());
 #endif
+    Serial.println("IP : " + (String)WiFi.localIP().toString());
 
 /*
     Menyalakan fungsi OTA pada ESP32 sehingga
